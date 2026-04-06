@@ -1,0 +1,16 @@
+{
+  "name": "yovid",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently -n WEB,API -c green,cyan \"pnpm -C apps/web dev\" \"pnpm -C apps/api dev\"",
+    "build": "pnpm -C packages/shared build && pnpm -C apps/api build && pnpm -C apps/web build",
+    "lint": "pnpm -C apps/web lint && pnpm -C apps/api lint",
+    "typecheck": "pnpm -C apps/web typecheck && pnpm -C apps/api typecheck",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
