@@ -1,17 +1,23 @@
-import { env } from "./config/env.js";
-import { connectDB } from "./config/db.js";
-import { createApp } from "./app.js";
-async function main() {
-    await connectDB();
-    const app = createApp();
-    app.listen(env.PORT, () => {
-        console.log("\n" + "=".repeat(50));
-        console.log(`✅ API running on http://localhost:${env.PORT}`);
-        console.log(`📚 Try: curl http://localhost:${env.PORT}/health`);
-        console.log("=".repeat(50) + "\n");
-    });
+import mongoose from 'mongoose';
+
+import app from './app.js';
+import courseRoutes from './routes/course.js';
+
+const PORT = process.env.PORT || 5000;
+
+app.use('/api', courseRoutes);
+
+function startServer() {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
-main().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+
+if (mongoose.connection.readyState === 1) {
+  startServer();
+} else {
+  mongoose.connection.once('connected', startServer);
+  mongoose.connection.once('error', (error) => {
+    console.error('Failed to start server:', error.message);
+  });
+}

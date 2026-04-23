@@ -15,7 +15,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-pdf": "^10.3.0",
-    "react-player": "^3.4.0"
+    "react-player": "^3.4.0",
+    "react-router-dom": "^7.14.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.11",

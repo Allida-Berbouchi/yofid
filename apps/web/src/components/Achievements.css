@@ -1,0 +1,127 @@
+.ach-container {
+  padding: 28px;
+  max-width: 440px;
+  font-family: sans-serif;
+}
+
+.ach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ach-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.ach-count {
+  font-size: 12px;
+  color: #555;
+  background: #f1f0ea;
+  border: 0.5px solid #ddd;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.ach-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ach-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  user-select: none;
+  outline: none;
+}
+
+.ach-card:hover { border-color: #c0c0c0; background: #fafaf8; }
+.ach-card:active { transform: scale(0.97); }
+
+.ach-card.selected {
+  border: 2px solid #1D9E75;
+  background: #E1F5EE;
+}
+
+.ach-card.selected .ach-label { color: #085041; }
+
+.ach-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #ccc;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ach-check.checked { background: #1D9E75; border-color: #1D9E75; }
+
+.ach-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ach-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.ach-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-clear {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-clear:hover { background: #f5f5f5; }
+
+.btn-save {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-save:hover { background: #f0f0ee; }

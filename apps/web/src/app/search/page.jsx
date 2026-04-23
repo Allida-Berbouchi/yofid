@@ -3,7 +3,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import CardPreview from "@/components/CardPreview";
-import { apiFetch } from "@/lib/api";
+import { fetchContentList } from "@/lib/api";
 export default function Search() {
     const [results, setResults] = useState([]);
     const [searched, setSearched] = useState(false);
@@ -17,8 +17,9 @@ export default function Search() {
         try {
             setSearched(true);
             setLoading(true);
-            const data = await apiFetch(`/resources?q=${encodeURIComponent(query)}`);
-            setResults(data.items || []);
+            const data = await fetchContentList();
+            const filtered = data.filter((item) => `${item.title} ${item.description} ${item.moduleId}`.toLowerCase().includes(query.toLowerCase()));
+            setResults(filtered);
         }
         catch (err) {
             console.error("Search error:", err);

@@ -1,34 +1,44 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import path from "path";
-import { fileURLToPath } from "url";
-import { env } from "./config/env.js";
-import authRoutes from "./modules/auth/auth.routes.js";
-import resourceRoutes from "./modules/resources/resources.routes.js";
-import { notFound, errorHandler } from "./middlewares/error.js";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-export function createApp() {
-    const app = express();
-    // CORS Configuration - Allow credentials
-    app.use(cors({
-        origin: env.CORS_ORIGIN,
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"]
-    }));
-    app.use(express.json({ limit: "2mb" }));
-    app.use(express.urlencoded({ limit: "2mb", extended: true }));
-    app.use(cookieParser());
-    // Serve locally uploaded files for testing
-    app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
-    // Backward-compatible alias for old video URLs.
-    app.use("/api/videos", express.static(path.join(__dirname, "../uploads/videos")));
-    app.get("/health", (_req, res) => res.json({ ok: true }));
-    app.use("/auth", authRoutes);
-    app.use("/resources", resourceRoutes);
-    app.use(notFound);
-    app.use(errorHandler);
-    return app;
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { connect } from 'mongoose';
+
+import userRoutes from './routes/userRoutes.js';
+import contentRoutes from './routes/contentRoutes.js';
+import playlistRoutes from './routes/playlistRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import bookmarkRoutes from './routes/bookmarkRoutes.js';
+import flaggedRoutes from './routes/flaggedContentRoutes.js';
+import { uploadRoot } from './controllers/upload.js';
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.resolve(uploadRoot)));
+
+app.get('/health', (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.use('/api/users', userRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/playlists', playlistRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/flags', flaggedRoutes);
+
+const mongoUri = process.env.MONGO_URI;
+
+if (!mongoUri) {
+  console.error('MONGO_URI is not set');
+} else {
+  connect(mongoUri)
+    .then(() => console.log('MongoDB connected'))
+    .catch((err) => console.error('MongoDB connection error:', err.message));
 }
+
+export default app;
