@@ -1,12 +1,17 @@
-"use client"
-import { useState, useRef } from 'react';
+"use client";
+import { useState, useRef, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import Topbar from "@/components/Topbar";
-import React from 'react';
+
 export default function WatchPage() {
-  const [videoId, setVideoId] = useState('CgkZ7MvWUAA');
-  const [inputUrl, setInputUrl] = useState('https://www.youtube.com/watch?v=CgkZ7MvWUAA&t=582s');
-  const iframeRef = useRef(null);
+  const [videoId, setVideoId] = useState("CgkZ7MvWUAA");
+  const [inputUrl, setInputUrl] = useState(
+    "https://www.youtube.com/watch?v=CgkZ7MvWUAA&t=582s"
+  );
+  const [player, setPlayer] = useState(null);
+  const [showSkipButtons, setShowSkipButtons] = useState(false);
+  const containerRef = useRef(null);
+  let hideTimeout;
 
   const extractVideoId = (url) => {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/;
@@ -21,146 +26,253 @@ export default function WatchPage() {
     if (id) setVideoId(id);
   };
 
-  // YouTube Player API functions
-  const sendCommandToPlayer = (command) => {
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({
-          event: 'command',
-          func: command,
-          args: []
-        }),
-        '*'
-      );
-    }
-  };
+  useEffect(() => {
+    let isMounted = true;
 
-  const pauseVideo = () => {
-    sendCommandToPlayer('pauseVideo');
-  };
-
-  const seekBySeconds = (seconds) => {
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      // Get current time and add/subtract seconds
-      iframe.contentWindow.postMessage(
-        JSON.stringify({
-          event: 'command',
-          func: 'getCurrentTime',
-          args: []
-        }),
-        '*'
-      );
+    const initPlayer = () => {
+      if (!isMounted) return;
       
-      // Listen for response (simplified approach - use YouTube Iframe API for production)
-      const handleMessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'infoDelivery' && data.info && data.info.currentTime !== undefined) {
-            const newTime = data.info.currentTime + seconds;
-            iframe.contentWindow.postMessage(
-              JSON.stringify({
-                event: 'command',
-                func: 'seekTo',
-                args: [newTime, true]
-              }),
-              '*'
-            );
-            window.removeEventListener('message', handleMessage);
+      if (window.YT && window.YT.Player && containerRef.current) {
+        const newPlayer = new window.YT.Player(containerRef.current, {
+          videoId: videoId,
+          playerVars: {
+            enablejsapi: 1,
+            controls: 1,
+          },
+          events: {
+            onReady: (event) => {
+              if (isMounted) {
+                setPlayer(event.target);
+              }
+            },
           }
-        } catch (e) {
-          // Ignore parse errors
-        }
-      };
+        });
+        return;
+      }
       
-      window.addEventListener('message', handleMessage);
-    }
-  };
-
-  const seekForward = () => seekBySeconds(10);
-  const seekBackward = () => seekBySeconds(-10);
-
-  // Alternative: Load YouTube Iframe API (more reliable)
-  React.useEffect(() => {
-    // This will load the YouTube API properly
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = () => {
-      new window.YT.Player(iframeRef.current, {
-        events: {
-          onReady: (event) => {
-            window.player = event.target;
-          }
-        }
-      });
+      setTimeout(initPlayer, 100);
     };
-  }, []);
 
-  // Simpler working solution using YouTube Iframe API
-  const [player, setPlayer] = useState(null);
-
-  React.useEffect(() => {
-    if (videoId && window.YT) {
-      const newPlayer = new window.YT.Player(iframeRef.current, {
-        events: {
-          onReady: (event) => {
-            setPlayer(event.target);
-          }
-        }
-      });
+    if (!window.YT) {
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.onload = () => {
+        initPlayer();
+      };
+      document.body.appendChild(script);
+    } else {
+      initPlayer();
     }
+
+    return () => {
+      isMounted = false;
+      if (player && player.destroy) {
+        player.destroy();
+      }
+    };
   }, [videoId]);
 
-  const handlePause = () => {
-    if (player) {
-      player.pauseVideo();
-    }
-  };
-
-  const handleSeekForward = () => {
+  const skipForward = () => {
     if (player) {
       const currentTime = player.getCurrentTime();
       player.seekTo(currentTime + 10, true);
+      // Visual feedback
+      showToast("+10 seconds");
     }
   };
 
-  const handleSeekBackward = () => {
+  const skipBackward = () => {
     if (player) {
       const currentTime = player.getCurrentTime();
       player.seekTo(currentTime - 10, true);
+      // Visual feedback
+      showToast("-10 seconds");
     }
   };
 
+  const showToast = (message) => {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20%';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    toast.style.color = 'white';
+    toast.style.padding = '8px 16px';
+    toast.style.borderRadius = '20px';
+    toast.style.fontSize = '14px';
+    toast.style.zIndex = '1000';
+    toast.style.pointerEvents = 'none';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 800);
+  };
+
+  const handleMouseEnter = () => {
+    setShowSkipButtons(true);
+    clearTimeout(hideTimeout);
+  };
+
+  const handleMouseLeave = () => {
+    hideTimeout = setTimeout(() => setShowSkipButtons(false), 300);
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!player) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        skipBackward();
+        showToast("-10 seconds");
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        skipForward();
+        showToast("+10 seconds");
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [player]);
+
   return (
     <AppLayout>
-      <Topbar/>
-      <div style={{ padding: '20px' }}>
-        
-        
-       
-        
-        {videoId && (
-          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-            <iframe 
-              ref={iframeRef}
-              src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
-              title="YouTube Video"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%'
-              }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
+      <Topbar />
+      <div style={{ padding: "20px" }}>
+        <div style={{ marginBottom: "20px" }}>
+          <input
+            type="text"
+            value={inputUrl}
+            onChange={handleUrlChange}
+            placeholder="Enter YouTube URL"
+            style={{
+              width: "100%",
+              padding: "8px",
+              fontSize: "16px",
+              border: "1px solid #ccc",
+              borderRadius: "4px"
+            }}
+          />
+        </div>
+
+        {/* Video Player with Hover Skip Buttons */}
+        <div 
+          style={{ position: "relative", paddingBottom: "56.25%", height: 0, backgroundColor: "#000" }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div
+            ref={containerRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%"
+            }}
+            id="youtube-player-container"
+          />
+          
+          {/* Custom Skip Buttons - Appear on hover */}
+          {showSkipButtons && (
+            <>
+              {/* Left side -10 button */}
+              <button
+                onClick={skipBackward}
+                style={{
+                  position: "absolute",
+                  left: "20px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  backdropFilter: "blur(4px)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "40px",
+                  padding: "12px 20px",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "all 0.2s ease",
+                  zIndex: 100,
+                  fontFamily: "sans-serif"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
+                  e.target.style.transform = "translateY(-50%) scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+                  e.target.style.transform = "translateY(-50%) scale(1)";
+                }}
+              >
+                ◀ 10
+              </button>
+
+              {/* Right side +10 button */}
+              <button
+                onClick={skipForward}
+                style={{
+                  position: "absolute",
+                  right: "20px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  backdropFilter: "blur(4px)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "40px",
+                  padding: "12px 20px",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "all 0.2s ease",
+                  zIndex: 100,
+                  fontFamily: "sans-serif"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
+                  e.target.style.transform = "translateY(-50%) scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+                  e.target.style.transform = "translateY(-50%) scale(1)";
+                }}
+              >
+                10 ▶
+              </button>
+
+              {/* Center hint */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "20px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                  backdropFilter: "blur(4px)",
+                  color: "white",
+                  padding: "6px 12px",
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  zIndex: 100,
+                  pointerEvents: "none",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                ← 10s  |  Arrow keys  |  10s →
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </AppLayout>
   );
