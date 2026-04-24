@@ -224,7 +224,7 @@ export default function HomePage() {
           </div>
 
           <div className="chip-row" style={{ marginTop: 20 }}>
-            <button className="chip active">All Content</button>
+            <button className="chip ">All Content</button>
             <button className="chip">Videos</button>
             <button className="chip">Articles</button>
             <button className="chip">Projects</button>
