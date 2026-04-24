@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import "./Nav.css";
+import Image from "next/image";
 
 const PanelIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -138,12 +139,37 @@ const SupportIcon = () => (
     />
   </svg>
 );
-
+const HomeIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    {/* Main house structure: Roof and outer walls */}
+    <path
+      d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* The Door */}
+    <rect
+      x="10"
+      y="15"
+      width="4"
+      height="6"
+      rx="1"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 const items = [
-  { href: "/dashboard", label: "Dashboard", Icon: DashboardIcon },
+  {href:"/home",label:"home",Icon:HomeIcon },
+  
   { href: "/courses", label: "Courses", Icon: CoursesIcon },
   { href: "/my-learning", label: "My Learning", Icon: LearningIcon },
-  { href: "/user-management", label: "User Management", Icon: UserIcon },
+ 
   { href: "/resources", label: "Add Resources", Icon: AddIcon },
   { href: "/support", label: "Support", Icon: SupportIcon },
 ];
@@ -191,8 +217,11 @@ export default function Nav({
         <div className="sidebar-panel">
           <div className="sidebar-head">
             <Link href="/dashboard" className="brand-wrap" onClick={closeMobile}>
-              <span className="brand-mark">Y</span>
-              <span className="brand-text">Youfid</span>
+              <Image src="icon.svg" alt="My Icon" 
+                    width={40} 
+                    height={40}
+                    ></Image>
+              <span className="brand-text" >Youfid</span>
             </Link>
 
             <button
@@ -242,3 +271,4 @@ export default function Nav({
     </>
   );
 }
+
