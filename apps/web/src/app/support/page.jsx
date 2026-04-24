@@ -1,5 +1,7 @@
+"use client"
 import AppLayout from "@/components/AppLayout";
 import Topbar from "@/components/Topbar";
+import { useState } from "react";
 
 const faqs = [
   {
@@ -28,18 +30,18 @@ const SearchLineIcon = () => (
 );
 
 export default function SupportPage() {
+  const [openIndex, setOpenIndex] = useState(null); // Track which FAQ is open
+
+const toggleFaq = (index) => {
+  setOpenIndex(openIndex === index ? null : index); // Close if same, open if different
+};
   return (
     <AppLayout>
       <Topbar placeholder="Search help articles, API docs, or tutorials..." />
       <div className="page-shell">
         <section className="section-card help-hero" style={{ marginTop: "22px" }}>
           <h1>How can we help?</h1>
-          <div className="hero-search help-search">
-            <span className="inline-search-icon">
-              <SearchLineIcon />
-            </span>
-            <span>Search for articles, guides, and tutorials...</span>
-          </div>
+          
           <div className="chip-row help-tags">
             <button className="chip">Expert analytics</button>
             <button className="chip">Reset password</button>
@@ -73,12 +75,24 @@ export default function SupportPage() {
         <div className="section-label">KNOWLEDGE BASE</div>
 
         <section className="faq-list">
-          {faqs.map((item, index) => (
-            <article key={item.q} className="section-card faq-item">
-              <h4>{item.q}</h4>
-              {index === 0 && <p>{item.a}</p>}
-            </article>
-          ))}
+         {faqs.map((item, index) => (
+  <article 
+    key={item.q} 
+    className="section-card faq-item"
+    onClick={() => toggleFaq(index)}
+    style={{ cursor: "pointer" }}
+  >
+    <h4 style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {item.q}
+      
+    </h4>
+    {openIndex === index && (
+      <div className="faq-answer" style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #eee" }}>
+        <p>{item.a}</p>
+      </div>
+    )}
+  </article>
+))}
         </section>
 
         <section className="center-cta" style={{ marginTop: "22px" }}>
