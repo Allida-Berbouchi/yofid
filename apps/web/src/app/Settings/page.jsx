@@ -3,12 +3,16 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import Topbar from "@/components/Topbar";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function SettingsPage() {
+  const pathname = usePathname();
+
   const [weeklyDigest, setWeeklyDigest] = useState(true);
   const [platformAnnouncements, setPlatformAnnouncements] = useState(true);
   const [betaFeatures, setBetaFeatures] = useState(false);
-
+  const router = useRouter();
   return (
     <AppLayout>
       <Topbar settingsActive />
@@ -24,12 +28,25 @@ export default function SettingsPage() {
         <section className="settings-layout">
           <aside className="settings-tabs section-card">
             <div className="tab-list">
-              <div className="tab-link active">Profile Information</div>
-              <div className="tab-link">Security and Password</div>
-              <div className="tab-link">Learning Preferences</div>
-              <div className="tab-link">Billing and Subscription</div>
-              <div className="tab-link" style={{ color: "#d73d32" }}>Sign Out</div>
-            </div>
+              <div className="tab-link ">Profile Information</div>
+              <div className="tab-link ">Security and Password</div>
+              <div className="tab-link ">Learning Preferences</div>
+              <div className="tab-link ">Billing and Subscription</div>
+              <div className="tab-link " onClick={() => router.push("/user-management")}>user management</div>
+              <div className="tab-link" style={{ color: "#d73d32" }}>
+  <button 
+    className="my-button" 
+    onClick={() => {
+      console.log("signed out");
+      
+       router.push("/login"); // Navigate after sign out
+      // localStorage.removeItem("token"); // Clear auth data
+    }}
+  >
+    Sign Out
+  </button>
+</div>
+</div>
           </aside>
 
           <div className="settings-main">
