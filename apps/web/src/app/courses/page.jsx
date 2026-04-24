@@ -94,7 +94,7 @@ const SearchLineIcon = () => (
 export default function CoursesPage() {
   return (
     <AppLayout>
-      <Topbar />
+      <Topbar  placeholder="what do you want to master today"/>
       <div className="page-shell">
         <section className="page-head">
           <h1 className="page-title">Course Catalog</h1>
@@ -105,15 +105,10 @@ export default function CoursesPage() {
         </section>
 
         <section className="section-card catalog-panel">
-          <div className="hero-search">
-            <span className="inline-search-icon">
-              <SearchLineIcon />
-            </span>
-            <span>What do you want to master today?</span>
-          </div>
+          
 
           <div className="chip-row" style={{ marginTop: "22px" }}>
-            <button className="chip active">All Disciplines</button>
+            <button className="chip ">All Disciplines</button>
             <button className="chip">Algorithms</button>
             <button className="chip">System Design</button>
             <button className="chip">AI and ML</button>
