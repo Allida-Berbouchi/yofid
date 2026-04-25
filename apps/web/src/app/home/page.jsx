@@ -58,7 +58,7 @@ function ContentCard({ item, rank }) {
   const badgeColor = getCategoryBadge(item.category);
 
   return (
-    <Link href={`/resources/${item._id}`} className="section-card course-card" style={{ display: "block", textDecoration: "none", cursor: "pointer" }}>
+    <Link href={`/watch?id=${encodeURIComponent(item._id)}`} className="section-card course-card" style={{ display: "block", textDecoration: "none", cursor: "pointer" }}>
       {/* cover thumbnail */}
       <div className={`course-cover ${cover}`}>
         {/* rank */}

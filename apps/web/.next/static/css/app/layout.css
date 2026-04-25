@@ -1666,5 +1666,69 @@ svg {
   .score-guide-item {
     grid-template-columns: 1fr;
   }
+
 }
+/* Remove the nesting and target the class directly */
+/* 1. Default state for all tabs */
+.tab-link {
+  padding: 12px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  color: #4a5568; /* Default grey-blue text */
+  font-weight: 500;
+}
+
+/* 2. Hover state: This is where the magic happens */
+.tab-link:hover {
+  background-color: white;
+  color: #2563eb; /* Changes text to Blue on hover */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 3. Keep Sign Out Red (even on hover) */
+/* We use :not(.sign-out-tab) or a specific override */
+.tab-link.sign-out-tab:hover {
+  color: #d73d32; /* Keeps it Red instead of turning Blue */
+}
+
+/* 4. Reset button styles so they don't interfere */
+.my-button {
+  background: none;
+  border: none;
+  color: inherit; /* Takes the color from the parent .tab-link */
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+.chip {
+  /* Default styling */
+  background-color: transparent;
+  color: #666;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Hover effect with box shadow */
+.chip:hover {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Simple shadow */
+  /* Or more dramatic shadow: */
+  /* box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3); */
+}
+
+.chip.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
 

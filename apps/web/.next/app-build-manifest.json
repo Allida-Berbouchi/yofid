@@ -6,64 +6,17 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/Settings/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/Settings/page.css",
-      "static/chunks/app/Settings/page.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/page.css",
-      "static/chunks/app/dashboard/page.js"
-    ],
-    "/courses/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/courses/page.css",
-      "static/chunks/app/courses/page.js"
-    ],
-    "/my-learning/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/my-learning/page.css",
-      "static/chunks/app/my-learning/page.js"
-    ],
-    "/user-management/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/user-management/page.css",
-      "static/chunks/app/user-management/page.js"
-    ],
-    "/resources/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/resources/page.css",
-      "static/chunks/app/resources/page.js"
-    ],
-    "/support/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/support/page.css",
-      "static/chunks/app/support/page.js"
-    ],
     "/home/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/home/page.css",
       "static/chunks/app/home/page.js"
     ],
-    "/contribute/page": [
+    "/watch/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/contribute/page.js"
-    ],
-    "/search/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/search/page.css",
-      "static/chunks/app/search/page.js"
+      "static/css/app/watch/page.css",
+      "static/chunks/app/watch/page.js"
     ]
   }
 }

@@ -1,9 +1,4 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/my-learning/page": "app/my-learning/page.js",
-  "/resources/page": "app/resources/page.js",
   "/home/page": "app/home/page.js",
-  "/contribute/page": "app/contribute/page.js",
-  "/Settings/page": "app/Settings/page.js",
-  "/search/page": "app/search/page.js"
+  "/watch/page": "app/watch/page.js"
 }
