@@ -1,386 +1,22 @@
 /* ============================================================
-   ResourceInteraction.css
-   Matches: yt-interaction-wrapper, yt-action-row, yt-pill-group,
-   yt-pill-item, yt-divider, yt-copy-link, yt-comment-input-area,
-   yt-avatar, yt-input-field, yt-comment-list, yt-admin-badge
+   RESOURCE VIEWER - CENTERED PDF & IMAGE CARDS
    ============================================================ */
 
-/* ── Wrapper ──────────────────────────────────────────────── */
-.yt-interaction-wrapper {
-  max-width: 860px;
-  margin: 24px auto 0;
-  padding: 0 0 64px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #0f0f0f;
-}
-
-/* ── Action row ───────────────────────────────────────────── */
-.yt-action-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-/* ── Pill group (like + dislike together) ─────────────────── */
-.yt-pill-group {
-  display: inline-flex;
-  align-items: center;
-  background: #f2f2f2;
-  border-radius: 50px;
-  overflow: hidden;
-}
-
-.yt-pill-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f0f0f;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.yt-pill-item:hover:not(:disabled) {
-  background: #e2e2e2;
-}
-
-.yt-pill-item:disabled {
-  cursor: default;
-  opacity: 0.75;
-}
-
-.yt-pill-item.active-like {
-  background: #065fd4;
-  color: #fff;
-}
-
-.yt-pill-item.active-dislike {
-  background: #0f0f0f;
-  color: #fff;
-}
-
-/* thin vertical separator between like and dislike */
-.yt-divider {
-  width: 1px;
-  height: 22px;
-  background: #d0d0d0;
-  flex-shrink: 0;
-}
-
-/* ── Copy link button ─────────────────────────────────────── */
-.yt-copy-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f0f0f;
-  background: #f2f2f2;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.yt-copy-link:hover {
-  background: #e2e2e2;
-}
-
-/* ── Comment input area ───────────────────────────────────── */
-.yt-comment-input-area {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e5e5e5;
-  margin-bottom: 20px;
-}
-
-/* ── Avatar circle ────────────────────────────────────────── */
-.yt-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #065fd4;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  text-transform: uppercase;
-}
-
-/* ── Input field ──────────────────────────────────────────── */
-.yt-input-field {
-  width: 100%;
-  padding: 8px 0;
-  font-size: 14px;
-  font-family: inherit;
-  color: #0f0f0f;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #d0d0d0;
-  outline: none;
-  transition: border-color 0.2s ease;
-  box-sizing: border-box;
-}
-
-.yt-input-field::placeholder {
-  color: #aaa;
-}
-
-.yt-input-field:focus {
-  border-bottom-color: #0f0f0f;
-}
-
-/* ── Comment list ─────────────────────────────────────────── */
-.yt-comment-list {
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── Admin / owner badge ──────────────────────────────────── */
-.yt-admin-badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 1px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #065fd4;
-  background: #e8f0fe;
-  border-radius: 50px;
-  vertical-align: middle;
-}
-
-/* ── btn-primary (Comment submit) ────────────────────────── */
-.btn-primary {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  color: #fff;
-  background: #065fd4;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #0356c0;
-}
-
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* ── Responsive ───────────────────────────────────────────── */
-@media (max-width: 520px) {
-  .yt-action-row {
-    gap: 8px;
-  }
-
-  .yt-pill-item {
-    padding: 8px 14px;
-  }
-
-  .yt-copy-link {
-    padding: 8px 14px;
-  }
-
-  .yt-avatar {
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
-  }
-}
-/* Add to your existing Resourceinteraction.css file */
-
-/* Resource Viewer specific styles */
-.resource-viewer .card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-/* PDF Card Styling */
-.resource-viewer .card:has(iframe[title]) {
-  padding: 0 !important;
-  overflow: hidden;
-  background: #f5f5f5;
-  border-radius: 12px;
-}
-
-.resource-viewer .card:has(iframe[title]) iframe {
-  width: 100%;
-  height: 85vh;
-  min-height: 500px;
-  border: none;
-  display: block;
-}
-
-/* Image Card Styling */
-.resource-viewer .card:has(img) {
-  padding: 0 !important;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.resource-viewer .card:has(img) img {
-  max-width: 100%;
-  max-height: 75vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.resource-viewer .card:has(img) img:hover {
-  transform: scale(1.02);
-}
-
-/* Video Card Styling (keeping consistent) */
-.resource-viewer .card:has(.react-player) {
-  padding: 0 !important;
-  background: black;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .resource-viewer .card:has(iframe[title]) iframe {
-    height: 50vh;
-    min-height: 300px;
-  }
-  
-  .resource-viewer .card:has(img) img {
-    max-height: 50vh;
-  }
-}
-
-/* Optional: Add loading animation for images */
-.resource-viewer .card:has(img) img.loading {
-  opacity: 0;
-}
-
-.resource-viewer .card:has(img) img.loaded {
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-/* Add to your existing Resourceinteraction.css file */
-
-/* Resource Viewer specific styles */
-.resource-viewer .card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-/* PDF Card Styling */
-.resource-viewer .card:has(iframe[title]) {
-  padding: 0 !important;
-  overflow: hidden;
-  background: #f5f5f5;
-  border-radius: 12px;
-}
-
-.resource-viewer .card:has(iframe[title]) iframe {
-  width: 100%;
-  height: 85vh;
-  min-height: 500px;
-  border: none;
-  display: block;
-}
-
-/* Image Card Styling */
-.resource-viewer .card:has(img) {
-  padding: 0 !important;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.resource-viewer .card:has(img) img {
-  max-width: 100%;
-  max-height: 75vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.resource-viewer .card:has(img) img:hover {
-  transform: scale(1.02);
-}
-
-/* Video Card Styling (keeping consistent) */
-.resource-viewer .card:has(.react-player) {
-  padding: 0 !important;
-  background: black;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .resource-viewer .card:has(iframe[title]) iframe {
-    height: 50vh;
-    min-height: 300px;
-  }
-  
-  .resource-viewer .card:has(img) img {
-    max-height: 50vh;
-  }
-}
-
-/* Optional: Add loading animation for images */
-.resource-viewer .card:has(img) img.loading {
-  opacity: 0;
-}
-
-.resource-viewer .card:has(img) img.loaded {
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-/* Add to your existing Resourceinteraction.css file */
-
-/* Container for the entire resource viewer */
+/* Main container - full viewport with flex centering */
 .resource-viewer {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 40px 20px;
 }
 
-/* Center the content wrapper */
-.resource-viewer .space-y-6 {
+/* Centered mode for PDF and image */
+.resource-viewer.centered-mode {
+  background: #f5f5f5;
+}
+
+.resource-viewer.centered-mode .space-y-6 {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -390,110 +26,259 @@
   justify-content: center;
 }
 
-/* Hide the title and description when showing PDF/image to avoid distraction */
-.resource-viewer:has(.card:has(iframe)) .space-y-6 > div:first-child,
-.resource-viewer:has(.card:has(img)) .space-y-6 > div:first-child {
-  display: none;
-}
-
-/* Center the card itself */
-.resource-viewer .card {
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* PDF Card - Centered perfectly */
-.resource-viewer .card:has(iframe) {
+/* PDF Card Styling - Perfectly centered */
+.resource-viewer .pdf-card {
   padding: 0 !important;
   background: #f0f0f0;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(-50%);
-  margin-top: -5%;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.resource-viewer .card:has(iframe) iframe {
+.pdf-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-wrapper {
   width: 100%;
-  height: 80vh;
-  min-height: 500px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 85vh;
+  min-height: 550px;
   border: none;
   display: block;
 }
 
-/* Image Card - Centered perfectly */
-.resource-viewer .card:has(img) {
-  padding: 20px !important;
-  background: #f8f9fa;
+.pdf-link {
+  margin-top: 16px;
+}
+
+/* Image Card Styling - Perfectly centered */
+.resource-viewer .image-card {
+  padding: 0 !important;
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(-50%);
-  margin-top: -5%;
-  min-height: 600px;
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: none;
 }
 
-.resource-viewer .card:has(img) img {
-  max-width: 100%;
-  max-height: 70vh;
+.centered-image {
+  max-width: 90vw;
   width: auto;
+  max-height: 85vh;
   height: auto;
   object-fit: contain;
   display: block;
   margin: 0 auto;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
-.resource-viewer .card:has(img) img:hover {
+.centered-image:hover {
   transform: scale(1.02);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
 }
 
-/* Video Card - Also centered */
+/* Video Card Styling */
 .resource-viewer .card:has(.react-player) {
   padding: 0 !important;
   background: black;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(-50%);
-  margin-top: -5%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 1000px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .pdf-iframe {
+    height: 70vh;
+    min-height: 450px;
+  }
+  
+  .centered-image {
+    max-height: 70vh;
+    max-width: 85vw;
+  }
+}
+
 @media (max-width: 768px) {
   .resource-viewer {
-    padding: 1rem;
+    padding: 20px 15px;
+    align-items: flex-start;
+    min-height: auto;
   }
   
-  .resource-viewer .card:has(iframe) {
-    transform: translateY(-30%);
-    margin-top: 0;
+  .resource-viewer .pdf-card {
+    max-width: 100%;
   }
   
-  .resource-viewer .card:has(iframe) iframe {
-    height: 50vh;
-    min-height: 300px;
+  .pdf-iframe {
+    height: 55vh;
+    min-height: 350px;
   }
   
-  .resource-viewer .card:has(img) {
-    transform: translateY(-30%);
-    margin-top: 0;
-    min-height: 400px;
-    padding: 10px !important;
-  }
-  
-  .resource-viewer .card:has(img) img {
-    max-height: 50vh;
+  .centered-image {
+    max-height: 55vh;
+    max-width: 95vw;
   }
   
   .resource-viewer .card:has(.react-player) {
-    transform: translateY(-30%);
-    margin-top: 0;
+    max-width: 100%;
   }
+}
+
+@media (max-width: 480px) {
+  .pdf-iframe {
+    height: 45vh;
+    min-height: 280px;
+  }
+  
+  .centered-image {
+    max-height: 45vh;
+  }
+}
+/* Container */
+.yt-interaction-wrapper {
+  max-width: 600px;
+  font-family: "Roboto", Arial, sans-serif;
+  color: #0f0f0f;
+}
+
+/* 1. ACTION BAR (Likes/Dislikes & Copy Link) */
+.yt-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.yt-pill-group {
+  display: flex;
+  align-items: center;
+  background-color: #f2f2f2;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.yt-pill-item {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.yt-pill-item:hover {
+  background-color: #e5e5e5;
+}
+
+.yt-pill-item:disabled {
+  cursor: default;
+}
+
+.yt-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+}
+
+/* Active States */
+.active-like { color: #065fd4; }
+.active-dislike { color: #065fd4; }
+
+/* Copy Link Button */
+.yt-copy-link {
+  background-color: #f2f2f2;
+  border: none;
+  border-radius: 18px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.yt-copy-link:hover {
+  background-color: #e5e5e5;
+}
+
+/* 2. COMMENT AREA */
+.yt-comment-input-area {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.yt-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #ff5722;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.yt-input-field {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 4px 0;
+  font-size: 14px;
+  outline: none;
+  transition: border-bottom 0.2s;
+}
+
+.yt-input-field:focus {
+  border-bottom: 2px solid #0f0f0f;
+}
+
+.btn-primary {
+  background-color: #065fd4;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary:disabled {
+  background-color: #f2f2f2;
+  color: #909090;
+  cursor: not-allowed;
+}
+
+/* 3. COMMENTS LIST */
+.yt-admin-badge {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 8px;
+  font-weight: 500;
 }

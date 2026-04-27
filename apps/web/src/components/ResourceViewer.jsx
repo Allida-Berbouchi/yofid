@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import ReactPlayer from "react-player";
-import "./ResourceInteraction.css"
+import "./ResourceInteraction.css";
 import { API_URL, fetchContentById } from "@/lib/api";
 
 function toAbsoluteUrl(url) {
@@ -71,89 +71,99 @@ export default function ResourceViewer({ resourceId }) {
     );
   }
 
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto px-4 py-8">
-      <div>
-        <h1 className="text-4xl font-bold mb-2 text-gray-900">{resource.title}</h1>
-        <p className="text-gray-500">
-          {resourceModule} · {resourceType.toUpperCase()}
-        </p>
-      </div>
+  // Determine if we're showing PDF or image for conditional rendering
+  const isPdfOrImage = resourceType === "pdf" || resourceType === "image";
 
-      <div className="card p-6 overflow-hidden">
-        {resourceType === "video" && (
-          <div className="bg-black rounded-lg overflow-hidden">
-            <ReactPlayer
-              src={fileUrl}
-              controls
-              width="100%"
-              height="100%"
-              style={{ aspectRatio: "16 / 9" }}
-            />
+  return (
+    <div className={`resource-viewer ${isPdfOrImage ? 'centered-mode' : ''}`}>
+      <div className="space-y-6">
+        {/* Hide title section for PDF and image */}
+        {!isPdfOrImage && (
+          <div>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900">{resource.title}</h1>
+            <p className="text-gray-500">
+              {resourceModule} · {resourceType.toUpperCase()}
+            </p>
           </div>
         )}
 
-        {resourceType === "image" && (
-          <img
-            src={fileUrl}
-            alt={resource.title}
-            className="w-full rounded-lg max-h-[70vh] object-contain"
-          />
-        )}
-
-        {resourceType === "pdf" && (
-          <div className="space-y-3">
-            <div className="rounded border border-gray-200 overflow-hidden">
-              <iframe
+        {/* Conditional card class based on resource type */}
+        <div className={`card ${resourceType === 'pdf' ? 'pdf-card' : resourceType === 'image' ? 'image-card' : ''} p-6 overflow-hidden`}>
+          {resourceType === "video" && (
+            <div className="bg-black rounded-lg overflow-hidden">
+              <ReactPlayer
                 src={fileUrl}
-                title={resource.title}
-                className="w-full h-[80vh]"
+                controls
+                width="100%"
+                height="100%"
+                style={{ aspectRatio: "16 / 9" }}
               />
             </div>
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary inline-block"
-            >
-              Open PDF in new tab
-            </a>
-          </div>
-        )}
+          )}
 
-        {(resourceType === "text" ||
-          resourceType === "article" ||
-          resourceType === "quiz") && (
-          <article className="prose max-w-none">
-            <p className="text-gray-700 leading-relaxed text-lg">
-              {resource.description || "No content available."}
-            </p>
-          </article>
-        )}
+          {resourceType === "image" && (
+            <img
+              src={fileUrl}
+              alt={resource.title}
+              className="centered-image"
+            />
+          )}
 
-        {resource.sourceUrl &&
-          resourceType !== "video" &&
-          resourceType !== "image" &&
-          resourceType !== "pdf" && (
-            <div className="flex flex-col items-center justify-center py-10">
+          {resourceType === "pdf" && (
+            <div className="pdf-container">
+              <div className="pdf-wrapper">
+                <iframe
+                  src={fileUrl}
+                  title={resource.title}
+                  className="pdf-iframe"
+                />
+              </div>
               <a
-                href={resource.sourceUrl}
+                href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-primary"
+                className="btn-secondary inline-block pdf-link"
               >
-                Open External Link
+                Open PDF in new tab
               </a>
             </div>
           )}
-      </div>
 
-      {resource.description && resourceType !== "text" && (
-        <div className="card p-6">
-          <h3 className="text-xl font-semibold mb-3">Description</h3>
-          <p className="text-gray-700 leading-relaxed">{resource.description}</p>
+          {(resourceType === "text" ||
+            resourceType === "article" ||
+            resourceType === "quiz") && (
+            <article className="prose max-w-none">
+              <p className="text-gray-700 leading-relaxed text-lg">
+                {resource.description || "No content available."}
+              </p>
+            </article>
+          )}
+
+          {resource.sourceUrl &&
+            resourceType !== "video" &&
+            resourceType !== "image" &&
+            resourceType !== "pdf" && (
+              <div className="flex flex-col items-center justify-center py-10">
+                <a
+                  href={resource.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  Open External Link
+                </a>
+              </div>
+            )}
         </div>
-      )}
+
+        {/* Hide description section for PDF and image */}
+        {!isPdfOrImage && resource.description && resourceType !== "text" && (
+          <div className="card p-6">
+            <h3 className="text-xl font-semibold mb-3">Description</h3>
+            <p className="text-gray-700 leading-relaxed">{resource.description}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
