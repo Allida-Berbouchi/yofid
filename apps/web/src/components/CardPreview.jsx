@@ -1,102 +1,155 @@
 import Link from "next/link";
 
-import { API_URL } from "@/lib/api";
+// ========== ICONS ==========
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <polygon points="6,4 20,12 6,20" />
+  </svg>
+);
 
-function getPreviewUrl(resource = {}) {
-  if (resource?._id) {
-    return `/watch?id=${encodeURIComponent(resource._id)}`;
+const DocIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
+    <rect x="4" y="3" width="16" height="18" rx="3" />
+    <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
+  </svg>
+);
+
+const StarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+    <path d="M12 2l2.9 6 6.6.9-4.8 4.6 1.1 6.5L12 17l-5.8 3 1.1-6.5L2.5 8.9l6.6-.9Z" />
+  </svg>
+);
+
+const FireIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+    <path d="M12 23a9 9 0 0 0 0-18c-1.5 0-3 .4-4.3 1.1 1.3 1.5 2 3.4 2 5.4 0 2-1 3.9-2.5 5.1 1.3.9 2.9 1.4 4.8 1.4Z" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" strokeLinecap="round" />
+  </svg>
+);
+
+// ========== COVERS ==========
+const COVERS = ["cover-1", "cover-2", "cover-3", "cover-4", "cover-5", "cover-6", "cover-7", "cover-8"];
+
+// ========== HELPER FUNCTION ==========
+function getCategoryBadge(category = "") {
+  if (!category) return "blue";
+  const cat = category.toLowerCase();
+  if (cat.includes("web")) return "blue";
+  if (cat.includes("cloud")) return "green";
+  if (cat.includes("ai") || cat.includes("ml")) return "red";
+  if (cat.includes("data")) return "purple";
+  return "blue";
+}
+
+// ========== MAIN COMPONENT ==========
+export default function CardPreview({ item, rank }) {
+  // Safety check - if no item, return null
+  if (!item || !item._id) {
+    return null;
   }
 
-  return "/watch";
-}
-
-function getMediaUrl(url = "") {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  }
-
-  return `${API_URL}${url.startsWith("/") ? url : `/${url}`}`;
-}
-
-function getResourceTypeLabel(type = "") {
-  const normalizedType = String(type).toLowerCase();
-
-  if (normalizedType === "article" || normalizedType === "text") return "ARTICLE";
-  if (normalizedType === "video") return "VIDEO";
-  if (normalizedType === "image") return "IMAGE";
-  if (normalizedType === "pdf") return "PDF";
-  if (normalizedType === "quiz") return "QUIZ";
-  if (normalizedType === "project") return "PROJECT";
-  return "LINK";
-}
-
-export default function CardPreview({ resource = {} }) {
-  const sourceUrl = resource.sourceUrl || resource.url || "";
-  const mediaUrl = getMediaUrl(sourceUrl);
-  const resourceType = String(resource.type || "link").toLowerCase();
-  const resourceModule = resource.moduleId || resource.subject || resource.category || "General";
-  const href = getPreviewUrl(resource);
+  const cover = COVERS[((rank || 1) - 1) % COVERS.length];
+  const isVideo = item.type?.toLowerCase() === "video";
+  const badgeColor = getCategoryBadge(item.category);
 
   return (
-    <Link href={href}>
-      <div className="card p-4 cursor-pointer hover:shadow-lg hover:scale-105 transition-all transform duration-200">
-        <h3 className="font-semibold text-lg mb-1 line-clamp-2">
-          {resource.title || "Untitled resource"}
-        </h3>
-        <p className="text-sm text-gray-500 mb-3">
-          {getResourceTypeLabel(resourceType)} · {resourceModule}
-        </p>
+    <Link 
+      href={`/watch?id=${encodeURIComponent(item._id)}`} 
+      className="section-card course-card" 
+      style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
+    >
+      {/* cover thumbnail */}
+      <div className={`course-cover ${cover}`}>
+        {/* rank */}
+        <span
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 14,
+            background: "rgba(255,255,255,0.18)",
+            backdropFilter: "blur(8px)",
+            color: "#fff",
+            fontWeight: 900,
+            fontSize: 13,
+            padding: "3px 10px",
+            borderRadius: 999,
+            letterSpacing: "0.06em",
+            zIndex: 2,
+          }}
+        >
+          #{rank || "?"}
+        </span>
 
-        <div className="overflow-hidden rounded-lg bg-gray-900 mb-3 h-40 relative group">
-          {resourceType === "video" && sourceUrl && (
-            <>
-              <video src={mediaUrl} className="w-full h-full object-cover" muted preload="metadata" />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-                <div className="text-white text-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  Play
-                </div>
-              </div>
-            </>
-          )}
-
-          {resourceType === "image" && sourceUrl && (
-            <img src={mediaUrl} alt={resource.title || "Resource preview"} className="w-full h-full object-cover" />
-          )}
-
-          {(resourceType === "text" ||
-            resourceType === "article" ||
-            resourceType === "quiz" ||
-            resourceType === "project") && (
-            <div className="p-3 bg-gradient-to-b from-blue-50 to-blue-100 h-full flex flex-col justify-center">
-              <p className="text-sm text-gray-700 line-clamp-4">
-                {resource.description || "No description"}
-              </p>
-            </div>
-          )}
-
-          {resourceType === "pdf" && (
-            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-orange-50 to-orange-100">
-              <span className="text-xl mb-2">PDF</span>
-              <p className="text-gray-600 font-medium text-sm">PDF Document</p>
-            </div>
-          )}
-
-          {resourceType === "link" && (
-            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-green-50 to-green-100">
-              <span className="text-xl mb-2">URL</span>
-              <p className="text-gray-600 font-medium text-sm">External Link</p>
-            </div>
-          )}
+        {/* category badge */}
+        <div className="cover-badge" style={{ zIndex: 2 }}>
+          <span className={`soft-badge ${badgeColor}`}>
+            {item.category || "Course"}
+          </span>
         </div>
 
-        {resource.description && resourceType !== "text" && resourceType !== "article" && (
-          <p className="text-xs text-gray-600 line-clamp-2 mb-3">{resource.description}</p>
-        )}
+        {/* type icon centred */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            zIndex: 1,
+          }}
+        >
+          <span
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.18)",
+              backdropFilter: "blur(8px)",
+              display: "grid",
+              placeItems: "center",
+              color: "#fff",
+            }}
+          >
+            {isVideo ? <PlayIcon /> : <DocIcon />}
+          </span>
+        </div>
+      </div>
 
-        <button className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm px-3 py-2 rounded font-medium transition">
-          View Details
-        </button>
+      {/* card body */}
+      <div className="course-card-body">
+        {/* rating */}
+        <div className="course-rating" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <StarIcon />
+          {item.rating ? Number(item.rating).toFixed(1) : "New"}
+          <span style={{ color: "#8090aa", fontWeight: 700, marginLeft: 6, fontSize: 13 }}>
+            {item.type || "Resource"}
+          </span>
+        </div>
+
+        <h3 className="course-title">{item.title || "Untitled"}</h3>
+
+        <p className="course-desc">
+          {item.description
+            ? item.description.length > 88
+              ? item.description.slice(0, 88) + "…"
+              : item.description
+            : "Explore this learning resource on Youfid."}
+        </p>
+
+        <div className="course-footer">
+          <span className="course-status" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <FireIcon /> Top pick
+          </span>
+          <span className="course-duration" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <ClockIcon />
+            {item.duration || "Self-paced"}
+          </span>
+        </div>
       </div>
     </Link>
   );

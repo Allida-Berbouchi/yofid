@@ -1,0 +1,208 @@
+/* ============================================================
+   ResourceInteraction.css
+   Matches: yt-interaction-wrapper, yt-action-row, yt-pill-group,
+   yt-pill-item, yt-divider, yt-copy-link, yt-comment-input-area,
+   yt-avatar, yt-input-field, yt-comment-list, yt-admin-badge
+   ============================================================ */
+
+/* ── Wrapper ──────────────────────────────────────────────── */
+.yt-interaction-wrapper {
+  max-width: 860px;
+  margin: 24px auto 0;
+  padding: 0 0 64px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #0f0f0f;
+}
+
+/* ── Action row ───────────────────────────────────────────── */
+.yt-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── Pill group (like + dislike together) ─────────────────── */
+.yt-pill-group {
+  display: inline-flex;
+  align-items: center;
+  background: #f2f2f2;
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.yt-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f0f0f;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.yt-pill-item:hover:not(:disabled) {
+  background: #e2e2e2;
+}
+
+.yt-pill-item:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.yt-pill-item.active-like {
+  background: #065fd4;
+  color: #fff;
+}
+
+.yt-pill-item.active-dislike {
+  background: #0f0f0f;
+  color: #fff;
+}
+
+/* thin vertical separator between like and dislike */
+.yt-divider {
+  width: 1px;
+  height: 22px;
+  background: #d0d0d0;
+  flex-shrink: 0;
+}
+
+/* ── Copy link button ─────────────────────────────────────── */
+.yt-copy-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f0f0f;
+  background: #f2f2f2;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.yt-copy-link:hover {
+  background: #e2e2e2;
+}
+
+/* ── Comment input area ───────────────────────────────────── */
+.yt-comment-input-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 20px;
+}
+
+/* ── Avatar circle ────────────────────────────────────────── */
+.yt-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #065fd4;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+/* ── Input field ──────────────────────────────────────────── */
+.yt-input-field {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f0f0f;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d0d0d0;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.yt-input-field::placeholder {
+  color: #aaa;
+}
+
+.yt-input-field:focus {
+  border-bottom-color: #0f0f0f;
+}
+
+/* ── Comment list ─────────────────────────────────────────── */
+.yt-comment-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Admin / owner badge ──────────────────────────────────── */
+.yt-admin-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #065fd4;
+  background: #e8f0fe;
+  border-radius: 50px;
+  vertical-align: middle;
+}
+
+/* ── btn-primary (Comment submit) ────────────────────────── */
+.btn-primary {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: #065fd4;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0356c0;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .yt-action-row {
+    gap: 8px;
+  }
+
+  .yt-pill-item {
+    padding: 8px 14px;
+  }
+
+  .yt-copy-link {
+    padding: 8px 14px;
+  }
+
+  .yt-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+}
