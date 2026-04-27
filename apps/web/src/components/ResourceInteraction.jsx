@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import "./Resourceinteraction"
+import "./Resourceinteraction.css"
 export default function ResourceInteraction({ resourceId }) {
   const [likes, setLikes] = useState(128);
   const [interaction, setInteraction] = useState(null); // 'like', 'dislike', or null

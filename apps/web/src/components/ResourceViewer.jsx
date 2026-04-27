@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import ReactPlayer from "react-player";
-
+import "./ResourceInteraction.css"
 import { API_URL, fetchContentById } from "@/lib/api";
 
 function toAbsoluteUrl(url) {
