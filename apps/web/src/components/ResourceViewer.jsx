@@ -163,6 +163,82 @@ export default function ResourceViewer({ resourceId }) {
             <p className="text-gray-700 leading-relaxed">{resource.description}</p>
           </div>
         )}
+        {!isPdfOrImage && resource.description && resourceType !== "text" && (
+  <div className="flex flex-col gap-6">
+    {/* 1. Existing Description Card */}
+    <div className="card p-6">
+      <h3 className="text-xl font-semibold mb-3">Description</h3>
+      <p className="text-gray-700 leading-relaxed">{resource.description}</p>
+    </div>
+
+    {/* 2. Video Case */}
+    {resourceType === "video" && resource.videoUrl && (
+      <div className="card p-6">
+        <h3 className="text-xl font-semibold mb-3">Video Preview</h3>
+        <div className="aspect-video rounded-lg overflow-hidden bg-black">
+          <video 
+            src={resource.videoUrl} 
+            controls 
+            className="w-full h-full"
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    )}
+
+    {/* 3. Link Case */}
+    {resourceType === "link" && resource.externalUrl && (
+      <div className="card p-6">
+        <h3 className="text-xl font-semibold mb-3">External Resource</h3>
+        <p className="text-gray-600 mb-4">Click the button below to visit the external link.</p>
+        <a 
+          href={resource.externalUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Visit Link 
+          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+    )}
+  </div>
+)}
+{resourceType === "pdf" && resource.pdfUrl && (
+  <div className="card p-6">
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-xl font-semibold">PDF Document</h3>
+      <a 
+        href={resource.pdfUrl} 
+        download 
+        className="pdf-download-btn"
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="配M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Download PDF
+      </a>
+    </div>
+
+    {/* PDF Preview Frame */}
+    <div className="pdf-preview-container">
+      <iframe
+        src={`${resource.pdfUrl}#toolbar=0`}
+        className="pdf-iframe"
+        title="PDF Preview"
+      ></iframe>
+      <div className="pdf-overlay-footer">
+        <p className="text-sm text-gray-500">Previewing document...</p>
+        <a href={resource.pdfUrl} target="_blank" rel="noreferrer" className="text-blue-600 text-sm font-medium hover:underline">
+          Open in New Tab
+        </a>
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
