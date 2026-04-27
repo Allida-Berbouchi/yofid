@@ -529,59 +529,63 @@ export default function AddResourcesPage() {
             </section>
 
             <section style={sectionBlockStyle}>
-              <div style={sectionHeaderStyle}>
-                <div>
-                  <h2 style={sectionTitleStyle}>My Uploaded Content</h2>
-                  <p style={sectionTextStyle}>
-                    Review what you have published and remove items you no longer want visible.
-                  </p>
-                </div>
-              </div>
+  <div style={sectionHeaderStyle}>
+    <div>
+      <h2 style={sectionTitleStyle}>My Uploaded Content</h2>
+      <p style={sectionTextStyle}>
+        Review what you have published and remove items you no longer want visible.
+      </p>
+    </div>
+  </div>
 
-              {myContent.length === 0 ? (
-                <div style={panelStyle}>No content yet. Add a file or URL to get started.</div>
-              ) : (
-                <div style={contentGridStyle}>
-                  {myContent.map((item) => {
-                    const sourceUrl = item.sourceUrl || item.url;
-                    const previewUrl = sourceUrl?.startsWith("http")
-                      ? sourceUrl
-                      : `${API_URL}${sourceUrl || ""}`;
+  {myContent.length === 0 ? (
+    <div style={panelStyle}>No content yet. Add a file or URL to get started.</div>
+  ) : (
+    <div style={contentGridStyle}>
+      {myContent.map((item, index) => {
+        // Skip invalid items
+        if (!item || !item._id) return null;
+        
+        const sourceUrl = item.sourceUrl || item.url;
+        const previewUrl = sourceUrl?.startsWith("http")
+          ? sourceUrl
+          : `${API_URL}${sourceUrl || ""}`;
 
-                    return (
-                      <div key={item._id} style={resourceCardWrapStyle}>
-                        <CardPreview resource={item} />
-                        <div style={resourceMetaStyle}>
-                          <p style={metaTextStyle}>
-                            Course: {item.courseId?.title || "Standalone"}
-                          </p>
-                          <p style={metaTextStyle}>
-                            Source: {item.sourceKind || "unknown"}
-                          </p>
-                          {sourceUrl && (
-                            <a
-                              href={previewUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={inlineLinkStyle}
-                            >
-                              Open resource
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(item._id)}
-                            style={dangerBtn}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        return (
+          <div key={item._id} style={resourceCardWrapStyle}>
+            {/* Pass 'item' prop, not 'resource' */}
+            <CardPreview item={item} rank={index + 1} />
+            <div style={resourceMetaStyle}>
+              <p style={metaTextStyle}>
+                Course: {item.courseId?.title || "Standalone"}
+              </p>
+              <p style={metaTextStyle}>
+                Source: {item.sourceKind || "unknown"}
+              </p>
+              {sourceUrl && (
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={inlineLinkStyle}
+                >
+                  Open resource
+                </a>
               )}
-            </section>
+              <button
+                type="button"
+                onClick={() => handleDelete(item._id)}
+                style={dangerBtn}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</section>
           </>
         )}
       </div>
@@ -707,7 +711,7 @@ const buttonStyle = {
 
 const smallBtn = {
   padding: "10px 12px",
-  border: "1px solid #d9e0e7",
+
   borderRadius: 12,
   background: "#f4f7fa",
   cursor: "pointer",
