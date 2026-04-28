@@ -130,13 +130,12 @@ const Sign = () => {
     <div className="signin-page">
       <div className="signin-left">
         <div className="signin-form-wrap">
-            <span className="Youfid">
-                <Image src="icon.svg" alt="My Icon" 
-                    width={88} 
-                    height={88} 
-                  />
-                  <p>Youfid</p>
+            <div className="brand-badge" aria-label="Youfid">
+              <span className="brand-badge-inner" aria-hidden="true">
+                <Image src="/icon.svg" alt="Youfid" width={44} height={44} priority />
               </span>
+              <span className="brand-badge-text">Youfid</span>
+            </div>
 
           <div className="signin-copy">
             <h1>Welcome Back !</h1>

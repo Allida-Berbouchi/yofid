@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
-import './page.css';
+import Image from "next/image";
+import "./page.css";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -123,7 +124,12 @@ export default function RegisterPage() {
 
       <div className="signup-right">
         <div className="signup-form-wrap">
-          <div className="brand-badge">Y</div>
+          <div className="brand-badge" aria-label="Youfid">
+            <span className="brand-badge-inner" aria-hidden="true">
+              <Image src="/icon.svg" alt="Youfid" width={44} height={44} priority />
+            </span>
+            <span className="brand-badge-text">Youfid</span>
+          </div>
 
           <div className="signup-copy">
             <h1>Create your Account</h1>

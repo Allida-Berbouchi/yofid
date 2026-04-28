@@ -39,6 +39,8 @@ const contentSchema = new Schema(
 
     courseId: { type: Schema.Types.ObjectId, ref: "Course", default: null },
 
+    duration: { type: Number, default: 0, min: 0 },
+
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

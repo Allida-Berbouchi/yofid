@@ -111,3 +111,85 @@ export async function fetchContentById(id) {
 
     return normalizeContentItem(result.data);
 }
+
+
+//courses
+export function normalizeCouresItem(item = {}) {
+    const defaultIcon = "/default-course-icon.svg";
+    return {
+        ...item,
+        _id: item._id,
+        title: item.title || "",
+        description: item.description || "",
+        avgTime: item.avgTime || 0,
+        icon: item.icon || defaultIcon,
+        createdBy: item.createdBy,
+    };
+}
+
+export async function fetchCoursese() {
+    const result = await apiFetch("/api/courses/list");
+    
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch courses");
+    }
+
+    return Array.isArray(result.data) 
+        ? result.data.map(normalizeCouresItem) 
+        : [];
+}
+
+//User
+export async function fetchUserProgress() {
+    const result = await apiFetch("/api/users/progress");
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch progress");
+    }
+    return Array.isArray(result.data) ? result.data : [];
+}
+
+export async function fetchContentProgress(contentId) {
+    const result = await apiFetch(`/api/content/${contentId}/progress`);
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch progress");
+    }
+    return result.data || { status: "not_started", progressPercent: 0 };
+}
+
+
+export async function fetchCurrentUser() {
+    const result = await apiFetch("/api/users/me");
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch user");
+    }
+    return result.data;
+}
+
+
+export async function fetchMyAchievements() {
+    const result = await apiFetch("/api/achievements/me");
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch achievements");
+    }
+    return result.data;
+}
+
+export async function evaluateAchievements() {
+    const result = await apiFetch("/api/achievements/evaluate", {
+        method: "POST",
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to evaluate achievements");
+    }
+    return result.data;
+}
+
+export async function markAchievementSeen(userAchievementId) {
+    const result = await apiFetch(`/api/achievements/${userAchievementId}/seen`, {
+        method: "PATCH",
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to mark achievement seen");
+    }
+    return result.data;
+}

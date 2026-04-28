@@ -6,6 +6,12 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/my-learning/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/my-learning/page.css",
+      "static/chunks/app/my-learning/page.js"
+    ],
     "/home/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -17,6 +23,12 @@
       "static/chunks/main-app.js",
       "static/css/app/watch/page.css",
       "static/chunks/app/watch/page.js"
+    ],
+    "/resources/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/resources/page.css",
+      "static/chunks/app/resources/page.js"
     ]
   }
 }

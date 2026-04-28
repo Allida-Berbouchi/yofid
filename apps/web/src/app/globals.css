@@ -557,6 +557,15 @@ svg {
   align-items: flex-end;
 }
 
+.feature-cover-split {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.feature-cover-icon {
+  align-self: flex-end;
+}
+
 .feature-1 {
   background: linear-gradient(135deg, #031507, #0d4f29, #061118);
 }
@@ -588,6 +597,19 @@ svg {
   margin-top: 18px;
 }
 
+.feature-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  color: #67768c;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .primary-action,
 .secondary-action {
   height: 44px;
@@ -606,6 +628,13 @@ svg {
 .secondary-action {
   background: #111827;
   color: #fff;
+}
+
+.feature-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .learning-list {
@@ -630,6 +659,12 @@ svg {
   display: grid;
   place-items: center;
   font-weight: 900;
+}
+
+.premium-learning-icon-box {
+  width: 64px;
+  height: 64px;
+  background: transparent;
 }
 
 .learning-copy h3 {
@@ -660,6 +695,17 @@ svg {
   letter-spacing: 0.08em;
 }
 
+.learning-item-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  color: #134d9c;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .milestone-grid {
   display: grid;
   grid-template-columns: 1.3fr 0.7fr;
@@ -669,6 +715,22 @@ svg {
 .milestone-card {
   padding: 26px;
   min-height: 340px;
+}
+
+.milestone-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.milestone-badge-copy {
+  min-width: 0;
+}
+
+.milestone-premium-icon {
+  flex-shrink: 0;
+  margin-top: -6px;
 }
 
 .milestone-card h3 {
@@ -683,6 +745,39 @@ svg {
   margin-bottom: 28px;
 }
 
+.milestone-achievement-strip {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.milestone-achievement-chip {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 243, 183, 0.32), transparent 40%),
+    linear-gradient(180deg, #f9fbff, #f3f6fb);
+  border: 1px solid #ebeff5;
+}
+
+.milestone-achievement-chip strong {
+  display: block;
+  font-size: 15px;
+  color: #17212d;
+  margin-bottom: 4px;
+}
+
+.milestone-achievement-chip span {
+  display: block;
+  color: #677589;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .metric-stack {
   display: grid;
   gap: 18px;
@@ -693,10 +788,16 @@ svg {
   min-height: 160px;
 }
 
+.metric-icon-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 .metric-card h4 {
   color: #1d7b6a;
   font-size: 20px;
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 .metric-card strong {
@@ -1234,6 +1335,10 @@ svg {
   .info-grid {
     grid-template-columns: 1fr;
   }
+
+  .milestone-hero {
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -1280,6 +1385,18 @@ svg {
     width: 100%;
     margin-top: 18px;
   }
+
+  .milestone-hero {
+    flex-direction: column;
+  }
+
+  .milestone-premium-icon {
+    margin-top: 0;
+  }
+
+  .metric-icon-row {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1319,6 +1436,11 @@ svg {
   .hero-search {
     height: auto;
     padding: 18px;
+    align-items: flex-start;
+  }
+
+  .feature-meta-line {
+    flex-direction: column;
     align-items: flex-start;
   }
 

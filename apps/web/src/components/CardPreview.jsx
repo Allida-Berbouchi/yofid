@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-// ========== ICONS ==========
 const PlayIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
     <polygon points="6,4 20,12 6,20" />

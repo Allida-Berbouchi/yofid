@@ -1,0 +1,141 @@
+import Achievement from '../models/Achievement.js';
+
+export const ACHIEVEMENTS = [
+  {
+    key: 'first_launch',
+    title: 'First Launch',
+    description: 'You started your first learning resource.',
+    category: 'onboarding',
+    rarity: 'common',
+    iconType: 'rocket',
+    color: '#4f8cff',
+    xp: 10,
+    criteria: { metric: 'started_content_count', operator: 'gte', target: 1 },
+  },
+  {
+    key: 'explorer_mode',
+    title: 'Explorer Mode',
+    description: 'You started three learning resources and built momentum.',
+    category: 'exploration',
+    rarity: 'common',
+    iconType: 'compass',
+    color: '#2b8a6d',
+    xp: 25,
+    criteria: { metric: 'started_content_count', operator: 'gte', target: 3 },
+  },
+  {
+    key: 'focus_locked',
+    title: 'Focus Locked',
+    description: 'You reached five started resources and kept your pace alive.',
+    category: 'focus',
+    rarity: 'rare',
+    iconType: 'shield',
+    color: '#2c6fd6',
+    xp: 40,
+    criteria: { metric: 'started_content_count', operator: 'gte', target: 5 },
+  },
+  {
+    key: 'first_flame',
+    title: 'First Flame',
+    description: 'You completed your first learning resource.',
+    category: 'completion',
+    rarity: 'common',
+    iconType: 'flame',
+    color: '#ff8a00',
+    xp: 20,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 1 },
+  },
+  {
+    key: 'new_growth',
+    title: 'New Growth',
+    description: 'You completed three learning resources.',
+    category: 'completion',
+    rarity: 'common',
+    iconType: 'star',
+    color: '#52b788',
+    xp: 40,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 3 },
+  },
+  {
+    key: 'brick_by_brick',
+    title: 'Brick by Brick',
+    description: 'You completed five learning resources.',
+    category: 'completion',
+    rarity: 'rare',
+    iconType: 'shield',
+    color: '#4f8cff',
+    xp: 75,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 5 },
+  },
+  {
+    key: 'builder_mindset',
+    title: 'Builder Mindset',
+    description: 'You completed ten learning resources.',
+    category: 'mastery',
+    rarity: 'rare',
+    iconType: 'medal',
+    color: '#8d99ae',
+    xp: 125,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 10 },
+  },
+  {
+    key: 'knowledge_architect',
+    title: 'Knowledge Architect',
+    description: 'You completed twenty-five learning resources.',
+    category: 'mastery',
+    rarity: 'epic',
+    iconType: 'brain',
+    color: '#9d4edd',
+    xp: 250,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 25 },
+  },
+  {
+    key: 'perfect_aim',
+    title: 'Perfect Aim',
+    description: 'You completed a resource with perfect mastery.',
+    category: 'mastery',
+    rarity: 'rare',
+    iconType: 'medal',
+    color: '#e9c46a',
+    xp: 60,
+    criteria: { metric: 'perfect_progress_count', operator: 'gte', target: 1 },
+  },
+  {
+    key: 'sharpshooter',
+    title: 'Sharpshooter',
+    description: 'You achieved perfect mastery on five resources.',
+    category: 'mastery',
+    rarity: 'epic',
+    iconType: 'medal',
+    color: '#f4a261',
+    xp: 140,
+    criteria: { metric: 'perfect_progress_count', operator: 'gte', target: 5 },
+  },
+  {
+    key: 'century_learner',
+    title: 'Century Learner',
+    description: 'You completed 100 learning resources. That is real discipline.',
+    category: 'mastery',
+    rarity: 'legendary',
+    iconType: 'crown',
+    color: '#d4af37',
+    xp: 1000,
+    criteria: { metric: 'completed_content_count', operator: 'gte', target: 100 },
+  },
+];
+
+export async function ensureAchievementCatalog() {
+  if (!ACHIEVEMENTS.length) {
+    return;
+  }
+
+  await Achievement.bulkWrite(
+    ACHIEVEMENTS.map((achievement) => ({
+      updateOne: {
+        filter: { key: achievement.key },
+        update: { $set: achievement },
+        upsert: true,
+      },
+    }))
+  );
+}

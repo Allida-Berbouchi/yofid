@@ -38,10 +38,13 @@ Authorization: Bearer I_am_not_vlalid
 # -------------------------
 # 4. Submit Content for Approval (adds to queue)
 # -------------------------
-POST http://localhost:5000/api/content/submit
+POST http://localhost:4000/api/content/submit
 Content-Type: application/json
 Authorization: Bearer <YOUR_JWT_TOKEN>
 
 {
   "contentId": "<PASTE_CONTENT_ID_HERE>"
 }
+
+###
+get http://localhost:4000/api/courses/list

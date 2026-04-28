@@ -2,28 +2,14 @@
 
 import AppLayout from "@/components/AppLayout";
 import Topbar from "@/components/Topbar";
-import Link from "next/link";
+import CardPreview from "@/components/CardPreview";
+import CardProgress from "@/components/CardProgress";
 import { useEffect, useState } from "react";
-import { fetchContentList } from "@/lib/api";
-
-const PlayIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-    <polygon points="6,4 20,12 6,20" />
-  </svg>
-);
-
-const DocIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
-    <rect x="4" y="3" width="16" height="18" rx="3" />
-    <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-    <path d="M12 2l2.9 6 6.6.9-4.8 4.6 1.1 6.5L12 17l-5.8 3 1.1-6.5L2.5 8.9l6.6-.9Z" />
-  </svg>
-);
+import {
+  fetchContentList,
+  fetchUserProgress,
+  fetchCurrentUser,
+} from "@/lib/api";
 
 const FireIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
@@ -31,124 +17,7 @@ const FireIcon = () => (
   </svg>
 );
 
-const ClockIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3 3" strokeLinecap="round" />
-  </svg>
-);
 
-// ── cover styles cycling through globals.css cover classes ─────────
-const COVERS = ["cover-1","cover-2","cover-3","cover-4","cover-5","cover-6","cover-7","cover-8"];
-
-// ── category badge colour ──────────────────────────────────────────
-function getCategoryBadge(category = "") {
-  const cat = category.toLowerCase();
-  if (cat.includes("web"))    return "blue";
-  if (cat.includes("cloud"))  return "green";
-  if (cat.includes("ai") || cat.includes("ml")) return "red";
-  if (cat.includes("data"))   return "purple";
-  return "blue";
-}
-
-// ── single content card ────────────────────────────────────────────
-function ContentCard({ item, rank }) {
-  const cover = COVERS[(rank - 1) % COVERS.length];
-  const isVideo = item.type?.toLowerCase() === "video";
-  const badgeColor = getCategoryBadge(item.category);
-
-  return (
-    <Link href={`/watch?id=${encodeURIComponent(item._id)}`} className="section-card course-card" style={{ display: "block", textDecoration: "none", cursor: "pointer" }}>
-      {/* cover thumbnail */}
-      <div className={`course-cover ${cover}`}>
-        {/* rank */}
-        <span
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 14,
-            background: "rgba(255,255,255,0.18)",
-            backdropFilter: "blur(8px)",
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: 13,
-            padding: "3px 10px",
-            borderRadius: 999,
-            letterSpacing: "0.06em",
-          }}
-        >
-          #{rank}
-        </span>
-
-        {/* category badge */}
-        <div className="cover-badge">
-          <span className={`soft-badge ${badgeColor}`}>
-            {item.category || "Course"}
-          </span>
-        </div>
-
-        {/* type icon centred */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "grid",
-            placeItems: "center",
-          }}
-        >
-          <span
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.18)",
-              backdropFilter: "blur(8px)",
-              display: "grid",
-              placeItems: "center",
-              color: "#fff",
-            }}
-          >
-            {isVideo ? <PlayIcon /> : <DocIcon />}
-          </span>
-        </div>
-      </div>
-
-      {/* card body */}
-      <div className="course-card-body">
-        {/* rating */}
-        <div className="course-rating" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <StarIcon />
-          {item.rating ? item.rating.toFixed(1) : "New"}
-          <span style={{ color: "#8090aa", fontWeight: 700, marginLeft: 6, fontSize: 13 }}>
-            {item.type || "Resource"}
-          </span>
-        </div>
-
-        <h3 className="course-title">{item.title}</h3>
-
-        <p className="course-desc">
-          {item.description
-            ? item.description.length > 88
-              ? item.description.slice(0, 88) + "…"
-              : item.description
-            : "Explore this learning resource on Youfid."}
-        </p>
-
-        <div className="course-footer">
-          <span className="course-status" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <FireIcon /> Top pick
-          </span>
-          <span className="course-duration" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <ClockIcon />
-            {item.duration || "Self-paced"}
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ── skeleton card ──────────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="section-card course-card">
@@ -167,48 +36,138 @@ function SkeletonCard() {
   );
 }
 
-// ── main page ──────────────────────────────────────────────────────
+function ProgressSkeletonCard() {
+  return (
+    <div className="section-card" style={{ padding: "20px" }}>
+      <div style={{ height: 20, width: "60%", background: "#edf1f6", borderRadius: 8, marginBottom: 12 }} />
+      <div style={{ height: 14, width: "40%", background: "#edf1f6", borderRadius: 8, marginBottom: 12 }} />
+      <div style={{ height: 8, background: "#edf1f6", borderRadius: 8, marginBottom: 8 }} />
+      <div style={{ height: 14, width: "30%", background: "#edf1f6", borderRadius: 8 }} />
+    </div>
+  );
+}
+
 export default function HomePage() {
-  const [top10, setTop10]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
   const [userName, setUserName] = useState("");
+  const [inProgressContent, setInProgressContent] = useState([]);
+  const [topContent, setTopContent] = useState([]);
+  const [progressMap, setProgressMap] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setUserName(localStorage.getItem("name") || "");
 
-    async function load() {
+    async function loadData() {
       try {
-        const all = await fetchContentList();
-        const sorted = [...all]
+        await fetchCurrentUser();
+
+        const allContent = await fetchContentList();
+
+        const userProgress = await fetchUserProgress();
+
+        const progressLookup = {};
+        userProgress.forEach((prog) => {
+          progressLookup[prog.contentId] = prog;
+        });
+        setProgressMap(progressLookup);
+
+        const inProgress = allContent
+          .filter(
+            (item) =>
+              progressLookup[item._id]?.status === "in_progress" ||
+              (progressLookup[item._id]?.progressPercent > 0 &&
+                progressLookup[item._id]?.progressPercent < 100)
+          )
+          .sort((a, b) => {
+            const progressA = progressLookup[a._id]?.progressPercent || 0;
+            const progressB = progressLookup[b._id]?.progressPercent || 0;
+            return progressB - progressA;
+          })
+          .slice(0, 3); 
+
+        //get best 10
+        const topTen = [...allContent]
           .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
           .slice(0, 10);
-        setTop10(sorted);
+
+        setInProgressContent(inProgress);
+        setTopContent(topTen);
       } catch (err) {
+        console.error("Error loading home data:", err);
         setError(err.message || "Could not load content.");
       } finally {
         setLoading(false);
       }
     }
-    load();
+
+    loadData();
   }, []);
+
+  const hasInProgress = inProgressContent.length > 0;
 
   return (
     <AppLayout>
       <Topbar />
       <div className="page-shell">
-
-        {/* ── page header ── */}
         <section className="page-head">
           <h1 className="page-title">
             {userName ? `Welcome back, ${userName}.` : "Home"}
           </h1>
           <p className="page-subtitle">
-            Your hand-picked top 10 — the highest-rated content on Youfid right now.
+            Continue learning or explore top-rated content on Youfid.
           </p>
         </section>
 
-        {/* ── filter panel (static, matches course catalog style) ── */}
+        {error && (
+          <div className="section-card" style={{ padding: 28, color: "var(--danger)", marginBottom: 20 }}>
+            {error}
+          </div>
+        )}
+
+        
+        {hasInProgress && (
+          <>
+            <section className="section-card catalog-panel" style={{ marginBottom: 22 }}>
+              <div
+                className="hero-search"
+                style={{ color: "var(--muted-2)", fontSize: 18, fontWeight: 600 }}
+              >
+                <span className="inline-search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                    <polyline points="13 2 13 9 20 9" />
+                  </svg>
+                </span>
+                Continue Learning
+              </div>
+
+              <div className="filters-bar">
+                <span style={{ color: "#7a8aa4", fontSize: 13, fontWeight: 800, letterSpacing: "0.1em" }}>
+                  {loading ? "…" : inProgressContent.length} IN PROGRESS
+                </span>
+              </div>
+            </section>
+
+            <section className="course-grid" style={{ marginBottom: 40 }}>
+              {loading
+                ? Array.from({ length: 3 }).map((_, i) => <ProgressSkeletonCard key={i} />)
+                : inProgressContent.map((item) => {
+                    const progress = progressMap[item._id];
+                    return (
+                      <CardProgress
+                        key={item._id}
+                        title={item.title || "Untitled"}
+                        subtitle={item.category || "Learning"}
+                        progress={`${progress?.progressPercent || 0}% complete`}
+                        mastery={progress?.progressPercent || 0}
+                      />
+                    );
+                  })}
+            </section>
+          </>
+        )}
+
         <section className="section-card catalog-panel" style={{ marginBottom: 22 }}>
           <div
             className="hero-search"
@@ -220,19 +179,12 @@ export default function HomePage() {
                 <path d="m17 17 4 4" strokeLinecap="round" />
               </svg>
             </span>
-            Top 10 picks for you
-          </div>
-
-          <div className="chip-row" style={{ marginTop: 20 }}>
-            <button className="chip ">All Content</button>
-            <button className="chip">Videos</button>
-            <button className="chip">Articles</button>
-            <button className="chip">Projects</button>
+            Top 10 Picks For You
           </div>
 
           <div className="filters-bar">
             <span style={{ color: "#7a8aa4", fontSize: 13, fontWeight: 800, letterSpacing: "0.1em" }}>
-              DISPLAYING {loading ? "…" : top10.length} RESULTS
+              DISPLAYING {loading ? "…" : topContent.length} RESULTS
             </span>
             <span className="soft-badge green" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
               <FireIcon /> Best rated
@@ -240,19 +192,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── grid ── */}
-        {error ? (
-          <div className="section-card" style={{ padding: 28, color: "var(--danger)" }}>{error}</div>
-        ) : (
-          <section className="course-grid">
-            {loading
-              ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-              : top10.map((item, i) => (
-                  <ContentCard key={item._id} item={item} rank={i + 1} />
-                ))}
-          </section>
-        )}
-
+        <section className="course-grid">
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+            : topContent.map((item, i) => (
+                <CardPreview key={item._id} item={item} rank={i + 1} />
+              ))}
+        </section>
       </div>
     </AppLayout>
   );

@@ -3,22 +3,16 @@ import mongoose from 'mongoose';
 import "./loadEnv.js";
 
 import app from './app.js';
-import courseRoutes from './routes/course.js';
 
 const PORT = Number.parseInt(process.env.PORT, 10);
-
-console.log('DEBUG: process.env.PORT =', process.env.PORT);
-console.log('DEBUG: Parsed PORT =', PORT);
 
 if (!Number.isFinite(PORT)) {
   throw new Error('PORT is missing or invalid in the root .env file');
 }
 
-app.use('/api', courseRoutes);
-
 function startServer() {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port : ${PORT}`);
   });
 }
 

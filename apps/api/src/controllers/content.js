@@ -6,7 +6,6 @@ import Course from "../models/Course.js";
 import Bookmark from "../models/Bookmark.js";
 import UserProgress from "../models/UserProgress.js";
 
-// --- Helper Functions ---
 const getTypeFromMime = (mime) => {
   if (mime.startsWith("video/")) return "video";
   if (mime.startsWith("image/")) return "image";
@@ -111,7 +110,6 @@ const createContent = async (req, res) => {
 
     const docsToCreate = [];
 
-    // 1. Handle Uploaded Files (from Multer)
     for (const file of req.files || []) {
       const type = getTypeFromMime(file.mimetype);
       if (!type) continue;
@@ -135,7 +133,6 @@ const createContent = async (req, res) => {
       });
     }
 
-    // 2. Handle External URLs
     for (const item of urlItems) {
       if (!item?.url) continue;
       docsToCreate.push({

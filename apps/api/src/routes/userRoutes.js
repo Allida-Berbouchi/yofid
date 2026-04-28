@@ -12,6 +12,9 @@ router.post('/login', userController.login);
 // Get current user info
 router.get('/me', authMiddleware, userController.getMe);
 
+// Get user progress
+router.get('/progress', authMiddleware, userController.getProgress);
+
 // Request creator status (protected route)
 router.post('/request-creator', authMiddleware, userController.requestCreatorStatus);
 

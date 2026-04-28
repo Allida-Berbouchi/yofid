@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import User from '../models/User.js';
+import UserProgress from '../models/UserProgress.js';
 import { jwtSecret } from '../utils/jwt.js';
 
 const register = async (req, res) => {
@@ -87,9 +88,20 @@ const getMe = async (req, res) => {
   }
 };
 
+// Get user progress for all content
+const getProgress = async (req, res) => {
+  try {
+    const progress = await UserProgress.find({ userId: req.user.id });
+    res.json(progress);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   register,
   login,
   requestCreatorStatus,
   getMe,
+  getProgress,
 };

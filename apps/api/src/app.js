@@ -10,6 +10,8 @@ import playlistRoutes from './routes/playlistRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import bookmarkRoutes from './routes/bookmarkRoutes.js';
 import flaggedRoutes from './routes/flaggedContentRoutes.js';
+import CourseRoutes from './routes/courseRoutes.js';
+import achievementRoutes from './routes/achievementRoutes.js';
 import { uploadRoot } from './controllers/upload.js';
 
 const app = express();
@@ -26,11 +28,14 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/courses',CourseRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/flags', flaggedRoutes);
+app.use('/api/achievements', achievementRoutes);
+
 
 const mongoUri = process.env.MONGO_URI;
 

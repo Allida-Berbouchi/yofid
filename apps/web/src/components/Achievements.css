@@ -1,127 +1,184 @@
 .ach-container {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
   padding: 28px;
-  max-width: 440px;
-  font-family: sans-serif;
+  font-family: inherit;
 }
 
 .ach-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.ach-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9b7a22;
 }
 
 .ach-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 800;
+  color: #16202a;
   margin: 0;
 }
 
 .ach-count {
+  flex-shrink: 0;
   font-size: 12px;
-  color: #555;
-  background: #f1f0ea;
-  border: 0.5px solid #ddd;
-  padding: 4px 10px;
-  border-radius: 20px;
+  font-weight: 700;
+  color: #5f4a0a;
+  background: linear-gradient(135deg, #fff6cf, #f5df8b);
+  border: 1px solid rgba(164, 130, 29, 0.2);
+  padding: 8px 12px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 .ach-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
 .ach-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 22px 14px 18px;
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
-  user-select: none;
-  outline: none;
+  gap: 16px;
+  padding: 20px 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(190, 197, 206, 0.8);
+  background:
+    radial-gradient(circle at top, rgba(255, 245, 194, 0.35), transparent 42%),
+    linear-gradient(180deg, #ffffff, #f7f8fb);
+  box-shadow: 0 18px 40px rgba(22, 32, 42, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.ach-card:hover { border-color: #c0c0c0; background: #fafaf8; }
-.ach-card:active { transform: scale(0.97); }
-
-.ach-card.selected {
-  border: 2px solid #1D9E75;
-  background: #E1F5EE;
+.ach-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(167, 136, 49, 0.35);
+  box-shadow: 0 24px 48px rgba(22, 32, 42, 0.12);
 }
 
-.ach-card.selected .ach-label { color: #085041; }
+.ach-card.is-locked {
+  background:
+    radial-gradient(circle at top, rgba(208, 214, 222, 0.25), transparent 42%),
+    linear-gradient(180deg, #fcfcfd, #f3f5f7);
+}
 
-.ach-check {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1.5px solid #ccc;
-  background: #fff;
+.ach-card-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.15s, border-color 0.15s;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.ach-check.checked { background: #1D9E75; border-color: #1D9E75; }
+.ach-rarity,
+.ach-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ach-rarity {
+  color: #243444;
+  background: rgba(228, 235, 243, 0.9);
+}
+
+.ach-rarity-common {
+  color: #40566d;
+  background: #e9eef4;
+}
+
+.ach-rarity-rare {
+  color: #0a4ab2;
+  background: #dff2ff;
+}
+
+.ach-rarity-epic {
+  color: #5e1fc7;
+  background: #efe2ff;
+}
+
+.ach-rarity-legendary {
+  color: #875900;
+  background: #fff0b8;
+}
+
+.ach-rarity-mythic {
+  color: #a0145a;
+  background: #ffe0f2;
+}
+
+.ach-status {
+  color: #6a7682;
+  background: #f2f4f7;
+}
+
+.ach-status.is-live {
+  color: #0d6d4c;
+  background: #dcf7ea;
+}
 
 .ach-icon {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 118px;
+}
+
+.ach-copy {
+  display: grid;
+  gap: 8px;
 }
 
 .ach-label {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #15202b;
+  line-height: 1.15;
+}
+
+.ach-description {
+  margin: 0;
   font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-  text-align: center;
-  line-height: 1.4;
-  transition: color 0.15s;
+  line-height: 1.55;
+  color: #5e6a76;
 }
 
-.ach-footer {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
+.ach-card.is-locked .ach-label,
+.ach-card.is-locked .ach-description {
+  color: #75808b;
 }
 
-.btn-clear {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: transparent;
-  color: #666;
-  font-size: 14px;
-  cursor: pointer;
+@media (max-width: 640px) {
+  .ach-container {
+    padding: 22px 18px;
+  }
+
+  .ach-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ach-title {
+    font-size: 24px;
+  }
 }
-
-.btn-clear:hover { background: #f5f5f5; }
-
-.btn-save {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-save:hover { background: #f0f0ee; }

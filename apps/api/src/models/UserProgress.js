@@ -9,6 +9,8 @@ const userProgressS = new Schema({
   progressPercent: { type: Number, default: 0 },
   lastPosition: { type: Number, default: 0 },
   completedAt: Date,
-});
+}, { timestamps: true });
+
+userProgressS.index({ userId: 1, contentId: 1 }, { unique: true });
 
 export default mongoose.model('UserProgress', userProgressS);
