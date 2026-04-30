@@ -1,19 +1,29 @@
+
 import express from "express";
 
 import authMiddleware from "../middleware/auth.js";
 import { requireCreatorOrAdmin } from "../middleware/resourceAccess.js";
-import CourseRoutes from "../controllers/Course.js";
+import CourseController from "../controllers/Course.js";
 import Course from "../models/Course.js";
+import { error } from "console";
 
 const router = express.Router();
 
-router.post("/courses", authMiddleware, requireCreatorOrAdmin, async (req, res) => {
+router.get("/list", CourseController.listAllCourses);
+
+
+router.post("/creat", authMiddleware, requireCreatorOrAdmin, async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, icon } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: "Course title is required" });
+    }
 
     const course = await Course.create({
-      title,
+      title: title.trim(),
       description: description || "",
+      icon: icon || null,
       createdBy: req.user.id,
     });
 
@@ -23,22 +33,24 @@ router.post("/courses", authMiddleware, requireCreatorOrAdmin, async (req, res) 
   }
 });
 
-router.get("/courses/mine", authMiddleware, requireCreatorOrAdmin, async (req, res) => {
+// Creator/admin
+router.get("/mine", authMiddleware, requireCreatorOrAdmin, async (req, res) => {
   try {
-    const query = req.account?.role === "admin"
-      ? {}
-      : { createdBy: req.user.id };
+    const userRole = req.user?.role || req.account?.role;
 
-    const courses = await Course.find(query).sort({
-      createdAt: -1,
-    });
+    const query =
+      userRole === "admin"
+        ? {}
+        : { createdBy: req.user.id };
+
+    const courses = await Course.find(query)
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
 
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
-
-router.get("/courses/list",CourseRoutes.listAllCourses)
 
 export default router;

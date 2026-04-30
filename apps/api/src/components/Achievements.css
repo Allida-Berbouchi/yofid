@@ -1,0 +1,184 @@
+.ach-container {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px;
+  font-family: inherit;
+}
+
+.ach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.ach-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9b7a22;
+}
+
+.ach-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #16202a;
+  margin: 0;
+}
+
+.ach-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5f4a0a;
+  background: linear-gradient(135deg, #fff6cf, #f5df8b);
+  border: 1px solid rgba(164, 130, 29, 0.2);
+  padding: 8px 12px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ach-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(190, 197, 206, 0.8);
+  background:
+    radial-gradient(circle at top, rgba(255, 245, 194, 0.35), transparent 42%),
+    linear-gradient(180deg, #ffffff, #f7f8fb);
+  box-shadow: 0 18px 40px rgba(22, 32, 42, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.ach-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(167, 136, 49, 0.35);
+  box-shadow: 0 24px 48px rgba(22, 32, 42, 0.12);
+}
+
+.ach-card.is-locked {
+  background:
+    radial-gradient(circle at top, rgba(208, 214, 222, 0.25), transparent 42%),
+    linear-gradient(180deg, #fcfcfd, #f3f5f7);
+}
+
+.ach-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ach-rarity,
+.ach-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ach-rarity {
+  color: #243444;
+  background: rgba(228, 235, 243, 0.9);
+}
+
+.ach-rarity-common {
+  color: #40566d;
+  background: #e9eef4;
+}
+
+.ach-rarity-rare {
+  color: #0a4ab2;
+  background: #dff2ff;
+}
+
+.ach-rarity-epic {
+  color: #5e1fc7;
+  background: #efe2ff;
+}
+
+.ach-rarity-legendary {
+  color: #875900;
+  background: #fff0b8;
+}
+
+.ach-rarity-mythic {
+  color: #a0145a;
+  background: #ffe0f2;
+}
+
+.ach-status {
+  color: #6a7682;
+  background: #f2f4f7;
+}
+
+.ach-status.is-live {
+  color: #0d6d4c;
+  background: #dcf7ea;
+}
+
+.ach-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 118px;
+}
+
+.ach-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.ach-label {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #15202b;
+  line-height: 1.15;
+}
+
+.ach-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #5e6a76;
+}
+
+.ach-card.is-locked .ach-label,
+.ach-card.is-locked .ach-description {
+  color: #75808b;
+}
+
+@media (max-width: 640px) {
+  .ach-container {
+    padding: 22px 18px;
+  }
+
+  .ach-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ach-title {
+    font-size: 24px;
+  }
+}

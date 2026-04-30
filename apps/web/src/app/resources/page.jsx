@@ -10,6 +10,14 @@ import CardPreview from "@/components/CardPreview";
 import Topbar from "@/components/Topbar";
 import { removeAccessToken } from "@/lib/auth";
 import { API_URL, apiFetch, normalizeContentItem } from "@/lib/api";
+import {
+  fetchCurrentUser,
+  fetchMyCourses,
+  fetchMyContent,
+  createCourse,
+  createContent,
+  deleteContent,
+} from "@/lib/api";
 
 const emptyUrlItem = {
   title: "",
@@ -48,54 +56,41 @@ export default function AddResourcesPage() {
       setLoading(true);
       setError("");
 
-      const meResult = await apiFetch("/api/users/me");
-      if (!meResult.ok) {
-        if (meResult.status === 401) {
-          removeAccessToken();
-          localStorage.removeItem("creator");
-          setError("Your session is no longer valid. Please sign in again.");
+      try {
+        const userData = await fetchCurrentUser();
+        setUser(userData);
+        localStorage.setItem("role", userData.role || "");
+        localStorage.setItem("creator", String(Boolean(userData.creator)));
+
+        if (userData.role !== "admin" && !userData.creator) {
           setLoading(false);
-          router.push("/login");
           return;
         }
 
-        setError(meResult.data?.message || "Please sign in to access resources");
+        const results = await Promise.allSettled([
+          fetchMyCourses(),
+          fetchMyContent(),
+        ]);
+
+        if (results[0].status === "fulfilled") {
+          setCourses(results[0].value);
+        }
+
+        if (results[1].status === "fulfilled") {
+          setMyContent(results[1].value);
+        }
+      } catch (err) {
+        if (err.message?.includes("401") || err.message?.includes("Failed to fetch user")) {
+          removeAccessToken();
+          localStorage.removeItem("creator");
+          setError("Your session is no longer valid. Please sign in again.");
+          router.push("/login");
+        } else {
+          setError(err.message || "Please sign in to access resources");
+        }
+      } finally {
         setLoading(false);
-        return;
       }
-
-      setUser(meResult.data);
-      localStorage.setItem("role", meResult.data.role || "");
-      localStorage.setItem("creator", String(Boolean(meResult.data.creator)));
-
-      if (meResult.data.role !== "admin" && !meResult.data.creator) {
-        setLoading(false);
-        
-        return;
-      }
-
-      const [coursesResult, contentResult] = await Promise.all([
-        apiFetch("/api/courses/mine"),
-        apiFetch("/api/content/mine"),
-      ]);
-
-      if (!coursesResult.ok) {
-        setError(coursesResult.data?.message || "Failed to load courses");
-      } else {
-        setCourses(Array.isArray(coursesResult.data) ? coursesResult.data : []);
-      }
-
-      if (!contentResult.ok) {
-        setError(contentResult.data?.message || "Failed to load your content");
-      } else {
-        setMyContent(
-          Array.isArray(contentResult.data)
-            ? contentResult.data.map(normalizeContentItem)
-            : []
-        );
-      }
-
-      setLoading(false);
     }
 
     init();
@@ -121,44 +116,24 @@ export default function AddResourcesPage() {
     setUrlItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
-  async function refreshContent() {
-    const result = await apiFetch("/api/content/mine");
-
-    if (!result.ok) {
-      throw new Error(result.data?.message || "Failed to load your content");
-    }
-
-    setMyContent(
-      Array.isArray(result.data) ? result.data.map(normalizeContentItem) : []
-    );
-  }
-
   async function handleCreateCourse(event) {
     event.preventDefault();
     setCourseSubmitting(true);
     setError("");
     setSuccessMsg("");
 
-    const result = await apiFetch("/api/courses", {
-      method: "POST",
-      body: JSON.stringify({
-        title: newCourseTitle,
-        description: newCourseDescription,
-      }),
-    });
-
-    if (!result.ok) {
-      setError(result.data?.message || "Failed to create course");
+    try {
+      const newCourse = await createCourse(newCourseTitle, newCourseDescription);
+      setCourses((current) => [newCourse, ...current]);
+      setCourseId(newCourse._id);
+      setNewCourseTitle("");
+      setNewCourseDescription("");
+      setSuccessMsg("Course created successfully");
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setCourseSubmitting(false);
-      return;
     }
-
-    setCourses((current) => [result.data, ...current]);
-    setCourseId(result.data._id);
-    setNewCourseTitle("");
-    setNewCourseDescription("");
-    setSuccessMsg("Course created successfully");
-    setCourseSubmitting(false);
   }
 
   function validateUrlItems(items) {
@@ -178,7 +153,6 @@ export default function AddResourcesPage() {
         return validation.error.issues[0]?.message || "Invalid resource data";
       }
     }
-
     return null;
   }
 
@@ -204,7 +178,6 @@ export default function AddResourcesPage() {
         if (files.length === 0) {
           throw new Error("Please choose at least one file");
         }
-
         files.forEach((file) => {
           formData.append("files", file);
         });
@@ -223,15 +196,7 @@ export default function AddResourcesPage() {
         formData.append("urlItems", JSON.stringify(validUrls));
       }
 
-      const result = await apiFetch("/api/content", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!result.ok) {
-        throw new Error(result.data?.message || "Failed to create content");
-      }
-
+      await createContent(formData);
       setSuccessMsg("Content uploaded successfully");
       setTitle("");
       setDescription("");
@@ -240,9 +205,11 @@ export default function AddResourcesPage() {
       setGradeLevel("");
       setFiles([]);
       setUrlItems([{ ...emptyUrlItem }]);
-      await refreshContent();
-    } catch (submissionError) {
-      setError(submissionError.message);
+
+      const updatedContent = await fetchMyContent();
+      setMyContent(updatedContent);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setSubmitting(false);
     }
@@ -252,69 +219,69 @@ export default function AddResourcesPage() {
     setError("");
     setSuccessMsg("");
 
-    const result = await apiFetch(`/api/content/${id}`, {
-      method: "DELETE",
-    });
-
-    if (!result.ok) {
-      setError(result.data?.message || "Delete failed");
-      return;
+    try {
+      await deleteContent(id);
+      setMyContent((current) => current.filter((item) => item._id !== id));
+      setSuccessMsg("Content deleted successfully");
+    } catch (err) {
+      setError(err.message);
     }
-
-    setMyContent((current) => current.filter((item) => item._id !== id));
-    setSuccessMsg("Content deleted successfully");
   }
 
   return (
     <AppLayout>
       <Topbar placeholder="Search your courses, uploads, and resource drafts..." />
-      <div style={pageStyle}>
-        <section style={heroStyle}>
-          <div>
-            <p style={eyebrowStyle}>Creator Workspace</p>
-            <h1 style={titleStyle}>Manage courses and publish learning resources</h1>
-            <p style={subtitleStyle}>
+      <div className="resources-page">
+        <section className="resources-hero">
+          <div className="resources-hero-content">
+            <p className="resources-eyebrow">Creator Workspace</p>
+            <h1>Manage courses and publish learning resources</h1>
+            <p className="resources-text">
               This area is available only to admins and users with creator access.
             </p>
           </div>
           {user && (
-            <div style={badgeRowStyle}>
-              <span style={statusBadgeStyle}>
+            <div className="badge-row">
+              <span className="status-badge">
                 Role: {(user.role || "user").toUpperCase()}
               </span>
-              <span style={statusBadgeStyle}>
+              <span className="status-badge">
                 Creator: {user.creator ? "Enabled" : "Disabled"}
               </span>
             </div>
           )}
         </section>
 
-        {error && <div style={errorStyle}>{error}</div>}
-        {successMsg && <div style={successStyle}>{successMsg}</div>}
+        {error && (
+          <div className="resources-panel resources-error">{error}</div>
+        )}
+        {successMsg && (
+          <div className="resources-panel resources-success">{successMsg}</div>
+        )}
 
         {loading ? (
-          <div style={panelStyle}>Loading resource workspace...</div>
+          <div className="resources-panel">Loading resource workspace...</div>
         ) : !canManageResources ? (
-          <div style={panelStyle}>
-            <h2 style={sectionTitleStyle}>Access restricted</h2>
-            <p style={sectionTextStyle}>
+          <div className="resources-panel">
+            <h2 className="resources-title">Access restricted</h2>
+            <p className="resources-text">
               Only admins or users with `creator` access can open this page.
             </p>
-            <div style={actionRowStyle}>
-              <Link href="/contribute" style={primaryLinkStyle}>
+            <div className="resources-action-row">
+              <Link href="/contribute" className="resources-link primary">
                 Request creator access
               </Link>
-              <Link href="/dashboard" style={secondaryLinkStyle}>
+              <Link href="/dashboard" className="resources-link secondary">
                 Back to dashboard
               </Link>
             </div>
           </div>
         ) : (
           <>
-            <section style={twoColumnStyle}>
-              <form onSubmit={handleCreateCourse} style={panelStyle}>
-                <h2 style={sectionTitleStyle}>Create Course</h2>
-                <p style={sectionTextStyle}>
+            <section className="resources-two-column">
+              <form onSubmit={handleCreateCourse} className="resources-panel">
+                <h2 className="resources-title">Create Course</h2>
+                <p className="resources-text">
                   Group upcoming resources into a course before you publish them.
                 </p>
                 <input
@@ -323,29 +290,29 @@ export default function AddResourcesPage() {
                   value={newCourseTitle}
                   onChange={(event) => setNewCourseTitle(event.target.value)}
                   required
-                  style={inputStyle}
+                  className="resources-input"
                 />
                 <textarea
                   placeholder="Course description"
                   value={newCourseDescription}
                   onChange={(event) => setNewCourseDescription(event.target.value)}
-                  style={{ ...inputStyle, minHeight: 100 }}
+                  className="resources-textarea"
                 />
-                <button type="submit" disabled={courseSubmitting} style={buttonStyle}>
+                <button type="submit" disabled={courseSubmitting} className="resources-button">
                   {courseSubmitting ? "Creating..." : "Create Course"}
                 </button>
               </form>
 
-              <form onSubmit={handleSubmit} style={panelStyle}>
-                <h2 style={sectionTitleStyle}>Add Resource</h2>
-                <p style={sectionTextStyle}>
+              <form onSubmit={handleSubmit} className="resources-panel">
+                <h2 className="resources-title">Add Resource</h2>
+                <p className="resources-text">
                   Upload files or add external URLs for the course materials you manage.
                 </p>
 
                 <select
                   value={courseId}
                   onChange={(event) => setCourseId(event.target.value)}
-                  style={inputStyle}
+                  className="resources-input"
                 >
                   <option value="">No course selected</option>
                   {courses.map((course) => (
@@ -354,54 +321,59 @@ export default function AddResourcesPage() {
                     </option>
                   ))}
                 </select>
+                {courses.length === 0 && (
+                  <p style={{ fontSize: "13px", color: "#8090aa", marginTop: "6px" }}>
+                    No courses available yet. Create one from the form on the left.
+                  </p>
+                )}
 
                 <input
                   type="text"
                   placeholder="Default title"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  style={inputStyle}
+                  className="resources-input"
                 />
                 <textarea
                   placeholder="Default description"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  style={{ ...inputStyle, minHeight: 100 }}
+                  className="resources-textarea"
                 />
                 <input
                   type="text"
                   placeholder="Category"
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
-                  style={inputStyle}
+                  className="resources-input"
                 />
                 <input
                   type="text"
                   placeholder="Subject"
                   value={subject}
                   onChange={(event) => setSubject(event.target.value)}
-                  style={inputStyle}
+                  className="resources-input"
                 />
                 <input
                   type="text"
                   placeholder="Grade level"
                   value={gradeLevel}
                   onChange={(event) => setGradeLevel(event.target.value)}
-                  style={inputStyle}
+                  className="resources-input"
                 />
 
-                <div style={modeSwitchStyle}>
+                <div className="resources-mode-switch">
                   <button
                     type="button"
                     onClick={() => setUploadMode("file")}
-                    style={uploadMode === "file" ? activeSmallBtn : smallBtn}
+                    className={`resources-small-btn ${uploadMode === "file" ? "active" : ""}`}
                   >
                     Upload files
                   </button>
                   <button
                     type="button"
                     onClick={() => setUploadMode("url")}
-                    style={uploadMode === "url" ? activeSmallBtn : smallBtn}
+                    className={`resources-small-btn ${uploadMode === "url" ? "active" : ""}`}
                   >
                     Add URLs
                   </button>
@@ -414,12 +386,12 @@ export default function AddResourcesPage() {
                       multiple
                       accept="video/*,image/*,application/pdf"
                       onChange={handleFilesChange}
-                      style={inputStyle}
+                      className="resources-input"
                     />
                     {files.length > 0 && (
-                      <div style={metaListStyle}>
+                      <div className="resources-chip-row">
                         {files.map((file) => (
-                          <span key={`${file.name}-${file.size}`} style={chipStyle}>
+                          <span key={`${file.name}-${file.size}`} className="resources-chip">
                             {file.name}
                           </span>
                         ))}
@@ -427,9 +399,9 @@ export default function AddResourcesPage() {
                     )}
                   </div>
                 ) : (
-                  <div style={urlStackStyle}>
+                  <div className="resources-url-stack">
                     {urlItems.map((item, index) => (
-                      <div key={`url-item-${index}`} style={urlCardStyle}>
+                      <div key={`url-item-${index}`} className="resources-url-card">
                         <input
                           type="text"
                           placeholder="Resource title"
@@ -437,7 +409,7 @@ export default function AddResourcesPage() {
                           onChange={(event) =>
                             handleUrlItemChange(index, "title", event.target.value)
                           }
-                          style={inputStyle}
+                          className="resources-input"
                         />
                         <input
                           type="url"
@@ -446,14 +418,14 @@ export default function AddResourcesPage() {
                           onChange={(event) =>
                             handleUrlItemChange(index, "url", event.target.value)
                           }
-                          style={inputStyle}
+                          className="resources-input"
                         />
                         <select
                           value={item.type}
                           onChange={(event) =>
                             handleUrlItemChange(index, "type", event.target.value)
                           }
-                          style={inputStyle}
+                          className="resources-input"
                         >
                           {resourceTypeSchema.options.map((type) => (
                             <option key={type} value={type}>
@@ -467,7 +439,7 @@ export default function AddResourcesPage() {
                           onChange={(event) =>
                             handleUrlItemChange(index, "description", event.target.value)
                           }
-                          style={{ ...inputStyle, minHeight: 90 }}
+                          className="resources-textarea"
                         />
                         <input
                           type="text"
@@ -476,36 +448,36 @@ export default function AddResourcesPage() {
                           onChange={(event) =>
                             handleUrlItemChange(index, "category", event.target.value)
                           }
-                          style={inputStyle}
+                          className="resources-input"
                         />
                         {urlItems.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeUrlItem(index)}
-                            style={dangerBtn}
+                            className="resources-danger-btn"
                           >
                             Remove URL row
                           </button>
                         )}
                       </div>
                     ))}
-                    <button type="button" onClick={addUrlItem} style={smallBtn}>
+                    <button type="button" onClick={addUrlItem} className="resources-small-btn">
                       Add another URL
                     </button>
                   </div>
                 )}
 
-                <button type="submit" disabled={submitting} style={buttonStyle}>
+                <button type="submit" disabled={submitting} className="resources-button">
                   {submitting ? "Saving..." : "Save Resource"}
                 </button>
               </form>
             </section>
 
-            <section style={sectionBlockStyle}>
-              <div style={sectionHeaderStyle}>
+            <section className="resources-section-block">
+              <div className="resources-section-header">
                 <div>
-                  <h2 style={sectionTitleStyle}>My Courses</h2>
-                  <p style={sectionTextStyle}>
+                  <h2 className="resources-title">My Courses</h2>
+                  <p className="resources-text">
                     {courses.length} course{courses.length === 1 ? "" : "s"} available for
                     attaching resources.
                   </p>
@@ -513,13 +485,13 @@ export default function AddResourcesPage() {
               </div>
 
               {courses.length === 0 ? (
-                <div style={panelStyle}>No courses yet. Create your first course above.</div>
+                <div className="resources-panel">No courses yet. Create your first course above.</div>
               ) : (
-                <div style={courseGridStyle}>
+                <div className="resources-course-grid">
                   {courses.map((course) => (
-                    <div key={course._id} style={panelStyle}>
+                    <div key={course._id} className="resources-panel">
                       <strong>{course.title}</strong>
-                      <p style={sectionTextStyle}>
+                      <p className="resources-text">
                         {course.description || "No description yet."}
                       </p>
                     </div>
@@ -528,325 +500,65 @@ export default function AddResourcesPage() {
               )}
             </section>
 
-            <section style={sectionBlockStyle}>
-  <div style={sectionHeaderStyle}>
-    <div>
-      <h2 style={sectionTitleStyle}>My Uploaded Content</h2>
-      <p style={sectionTextStyle}>
-        Review what you have published and remove items you no longer want visible.
-      </p>
-    </div>
-  </div>
+            <section className="resources-section-block">
+              <div className="resources-section-header">
+                <div>
+                  <h2 className="resources-title">My Uploaded Content</h2>
+                  <p className="resources-text">
+                    Review what you have published and remove items you no longer want visible.
+                  </p>
+                </div>
+              </div>
 
-  {myContent.length === 0 ? (
-    <div style={panelStyle}>No content yet. Add a file or URL to get started.</div>
-  ) : (
-    <div style={contentGridStyle}>
-      {myContent.map((item, index) => {
-        // Skip invalid items
-        if (!item || !item._id) return null;
-        
-        const sourceUrl = item.sourceUrl || item.url;
-        const previewUrl = sourceUrl?.startsWith("http")
-          ? sourceUrl
-          : `${API_URL}${sourceUrl || ""}`;
+              {myContent.length === 0 ? (
+                <div className="resources-panel">No content yet. Add a file or URL to get started.</div>
+              ) : (
+                <div className="resources-content-grid">
+                  {myContent.map((item) => {
+                    if (!item || !item._id) return null;
 
-        return (
-          <div key={item._id} style={resourceCardWrapStyle}>
-            {/* Pass 'item' prop, not 'resource' */}
-            <CardPreview item={item} rank={index + 1} />
-            <div style={resourceMetaStyle}>
-              <p style={metaTextStyle}>
-                Course: {item.courseId?.title || "Standalone"}
-              </p>
-              <p style={metaTextStyle}>
-                Source: {item.sourceKind || "unknown"}
-              </p>
-              {sourceUrl && (
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={inlineLinkStyle}
-                >
-                  Open resource
-                </a>
+                    const sourceUrl = item.sourceUrl || item.url;
+                    const previewUrl = sourceUrl?.startsWith("http")
+                      ? sourceUrl
+                      : `${API_URL}${sourceUrl || ""}`;
+
+                    return (
+                      <div key={item._id} className="resources-card-wrap">
+                        <CardPreview item={item} rank={myContent.indexOf(item) + 1} />
+                        <div className="resources-meta">
+                          <p className="resources-meta-text">
+                            Course: {item.courseId?.title || "Standalone"}
+                          </p>
+                          <p className="resources-meta-text">
+                            Source: {item.sourceKind || "unknown"}
+                          </p>
+                          {sourceUrl && (
+                            <a
+                              href={previewUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="resources-inline-link"
+                            >
+                              Open resource
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item._id)}
+                            className="resources-danger-btn"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-              <button
-                type="button"
-                onClick={() => handleDelete(item._id)}
-                style={dangerBtn}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  )}
-</section>
+            </section>
           </>
         )}
       </div>
     </AppLayout>
   );
 }
-
-const pageStyle = {
-  maxWidth: 1240,
-  margin: "0 auto",
-  padding: "24px 24px 40px",
-};
-
-const heroStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: 18,
-  marginBottom: 24,
-  padding: 24,
-  borderRadius: 24,
-  background:
-    "linear-gradient(135deg, rgba(9,42,74,0.96) 0%, rgba(18,98,124,0.95) 58%, rgba(232,183,91,0.92) 100%)",
-  color: "#fff",
-  flexWrap: "wrap",
-};
-
-const eyebrowStyle = {
-  margin: 0,
-  fontSize: 12,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  opacity: 0.8,
-};
-
-const titleStyle = {
-  margin: "10px 0 8px",
-  fontSize: "clamp(2rem, 4vw, 3rem)",
-  lineHeight: 1.05,
-};
-
-const subtitleStyle = {
-  margin: 0,
-  maxWidth: 700,
-  fontSize: 16,
-  lineHeight: 1.6,
-  opacity: 0.88,
-};
-
-const badgeRowStyle = {
-  display: "flex",
-  gap: 10,
-  flexWrap: "wrap",
-};
-
-const statusBadgeStyle = {
-  padding: "10px 14px",
-  borderRadius: 999,
-  background: "rgba(255,255,255,0.14)",
-  border: "1px solid rgba(255,255,255,0.2)",
-  fontSize: 13,
-  fontWeight: 600,
-};
-
-const twoColumnStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 20,
-  alignItems: "start",
-};
-
-const sectionBlockStyle = {
-  marginTop: 28,
-};
-
-const sectionHeaderStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 16,
-  marginBottom: 14,
-};
-
-const panelStyle = {
-  background: "#ffffff",
-  borderRadius: 22,
-  padding: 22,
-  boxShadow: "0 18px 40px rgba(12, 36, 62, 0.08)",
-  border: "1px solid rgba(15, 23, 42, 0.06)",
-};
-
-const sectionTitleStyle = {
-  margin: "0 0 6px",
-  fontSize: 24,
-  color: "#10243c",
-};
-
-const sectionTextStyle = {
-  margin: 0,
-  color: "#516072",
-  lineHeight: 1.6,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px 14px",
-  borderRadius: 14,
-  border: "1px solid #d9e0e7",
-  marginTop: 12,
-  background: "#fbfdff",
-};
-
-const buttonStyle = {
-  marginTop: 14,
-  padding: "12px 16px",
-  border: "none",
-  borderRadius: 14,
-  background: "#0f7a85",
-  color: "#fff",
-  cursor: "pointer",
-  fontWeight: 700,
-};
-
-const smallBtn = {
-  padding: "10px 12px",
-
-  borderRadius: 12,
-  background: "#f4f7fa",
-  cursor: "pointer",
-};
-
-const activeSmallBtn = {
-  ...smallBtn,
-  background: "#10243c",
-  color: "#fff",
-  borderColor: "#10243c",
-};
-
-const dangerBtn = {
-  padding: "10px 12px",
-  border: "none",
-  borderRadius: 12,
-  background: "#c83d3d",
-  color: "#fff",
-  cursor: "pointer",
-};
-
-const modeSwitchStyle = {
-  display: "flex",
-  gap: 10,
-  flexWrap: "wrap",
-  marginTop: 12,
-};
-
-const urlStackStyle = {
-  display: "grid",
-  gap: 12,
-  marginTop: 12,
-};
-
-const urlCardStyle = {
-  padding: 16,
-  borderRadius: 18,
-  background: "#f7fafc",
-  border: "1px solid #e2e8f0",
-};
-
-const courseGridStyle = {
-  display: "grid",
-  gap: 14,
-  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-};
-
-const contentGridStyle = {
-  display: "grid",
-  gap: 16,
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-};
-
-const resourceCardWrapStyle = {
-  display: "grid",
-  gap: 10,
-};
-
-const resourceMetaStyle = {
-  ...panelStyle,
-  padding: 16,
-};
-
-const metaTextStyle = {
-  margin: "0 0 8px",
-  color: "#516072",
-  fontSize: 14,
-};
-
-const inlineLinkStyle = {
-  display: "inline-block",
-  marginBottom: 10,
-  color: "#0f5f9a",
-  textDecoration: "none",
-  fontWeight: 600,
-};
-
-const metaListStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  marginTop: 12,
-};
-
-const chipStyle = {
-  padding: "8px 10px",
-  borderRadius: 999,
-  background: "#edf6ff",
-  color: "#1b4f7a",
-  fontSize: 13,
-};
-
-const errorStyle = {
-  ...panelStyle,
-  marginBottom: 18,
-  background: "#fff4f4",
-  border: "1px solid #f1c3c3",
-  color: "#8d2121",
-};
-
-const successStyle = {
-  ...panelStyle,
-  marginBottom: 18,
-  background: "#f3fff5",
-  border: "1px solid #bfe5c4",
-  color: "#1c6a31",
-};
-
-const actionRowStyle = {
-  display: "flex",
-  gap: 12,
-  flexWrap: "wrap",
-  marginTop: 18,
-};
-
-const primaryLinkStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "12px 16px",
-  borderRadius: 14,
-  background: "#0f7a85",
-  color: "#fff",
-  textDecoration: "none",
-  fontWeight: 700,
-};
-
-const secondaryLinkStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "12px 16px",
-  borderRadius: 14,
-  background: "#f4f7fa",
-  color: "#10243c",
-  textDecoration: "none",
-  fontWeight: 700,
-};

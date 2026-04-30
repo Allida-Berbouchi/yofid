@@ -28,8 +28,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use("/api/content", contentRoutes);
 app.use('/api/courses',CourseRoutes);
-app.use('/api/content', contentRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);

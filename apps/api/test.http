@@ -18,33 +18,29 @@ Content-Type: application/json
 
 ### -------------------------
 # 3. Create Content (as user)
-# -------------------------
-POST http://localhost:4000/api/content/
+@baseUrl = http://localhost:4000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZGU3NjVmMzEyYjQwNmY2YzJkZjZiNCIsInJvbGUiOiJzdHVkZW50IiwibGV2ZWwiOiIxIiwiaWF0IjoxNzc3NDg1MTY1LCJleHAiOjE3Nzc1NzE1NjV9.NmMqmGCTcFjOd2PnguhyHDyhAd2j3STkKsj3HfWk0Cc
+@contentId = 69ebf12f97971102e2711771
+
+### 1. Test backend connection
+GET {{baseUrl}}/api/content
+
+
+### 2. Test top content
+GET {{baseUrl}}/api/content/top
+
+
+### 3. Test one content item by id
+GET {{baseUrl}}/api/content/{{contentId}}
+
+
+### 4. Test trackContentInteraction
+POST {{baseUrl}}/api/content/interactions
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Authorization: Bearer I_am_not_vlalid
 
 {
-  "title": "Introduction to Math",
-  "description": "Basic math concepts",
-  "type": "article",
-  "category": "Math",
-  "subject": "Algebra",
-  "gradeLevel": "5",
-  "url": "https://example.com/math-intro"
+  "contentId": "{{contentId}}",
+  "interactionType": "like"
 }
-
 ###
-
-# -------------------------
-# 4. Submit Content for Approval (adds to queue)
-# -------------------------
-POST http://localhost:4000/api/content/submit
-Content-Type: application/json
-Authorization: Bearer <YOUR_JWT_TOKEN>
-
-{
-  "contentId": "<PASTE_CONTENT_ID_HERE>"
-}
-
-###
-get http://localhost:4000/api/courses/list

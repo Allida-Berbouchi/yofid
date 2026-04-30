@@ -1,4 +1,6 @@
 export const ACHIEVEMENT_ICON_TYPES = [
+  "book",
+  "learning",
   "rocket",
   "flame",
   "crown",
@@ -12,4 +14,3 @@ export const ACHIEVEMENT_ICON_TYPES = [
   "compass",
   "star",
 ];
-

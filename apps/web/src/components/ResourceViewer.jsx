@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import "./ResourceInteraction.css";
-import { API_URL, fetchContentById } from "@/lib/api";
+import AchievementUnlockOverlay from "./AchievementUnlockOverlay";
+import {
+  API_URL,
+  fetchContentById,
+  fetchContentProgress,
+  markAchievementSeen,
+  saveContentProgress,
+} from "@/lib/api";
 
 function toAbsoluteUrl(url) {
   if (!url) return "";
@@ -11,10 +18,27 @@ function toAbsoluteUrl(url) {
   return `${API_URL}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
+function formatPercent(value) {
+  return `${Math.round(Math.max(0, Math.min(100, Number(value || 0))))}%`;
+}
+
+function getUserAchievementId(item = {}) {
+  return item.userAchievementId || item._id || item.id || null;
+}
+
 export default function ResourceViewer({ resourceId }) {
   const [resource, setResource] = useState(null);
+  const [progress, setProgress] = useState({
+    status: "not_started",
+    progressPercent: 0,
+    lastPosition: 0,
+  });
+  const [achievementQueue, setAchievementQueue] = useState([]);
   const [error, setError] = useState("");
+  const [progressError, setProgressError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const lastSyncRef = useRef({ at: 0, percent: 0 });
+  const viewTrackedRef = useRef("");
 
   useEffect(() => {
     let active = true;
@@ -22,12 +46,18 @@ export default function ResourceViewer({ resourceId }) {
     async function loadResource() {
       setIsLoading(true);
       setError("");
+      setProgressError("");
 
       try {
-        const data = await fetchContentById(resourceId);
-        if (active) {
-          setResource(data);
-        }
+        const [data, savedProgress] = await Promise.all([
+          fetchContentById(resourceId),
+          fetchContentProgress(resourceId).catch(() => null),
+        ]);
+
+        if (!active) return;
+
+        setResource(data);
+        if (savedProgress) setProgress(savedProgress);
       } catch (fetchError) {
         if (active) {
           setError(fetchError?.message || "Failed to fetch resource");
@@ -53,6 +83,106 @@ export default function ResourceViewer({ resourceId }) {
   const resourceType = resource?.type || "link";
   const resourceModule = resource?.moduleId || "General";
 
+  const dismissAchievement = useCallback(async (achievement) => {
+    const userAchievementId = getUserAchievementId(achievement);
+
+    setAchievementQueue((current) => current.slice(1));
+
+    if (userAchievementId) {
+      try {
+        await markAchievementSeen(userAchievementId);
+      } catch (seenError) {
+        console.error("Failed to mark achievement seen:", seenError);
+      }
+    }
+  }, []);
+
+  async function syncProgress(payload, { silent = true } = {}) {
+    if (!resourceId) return null;
+
+    try {
+      const result = await saveContentProgress(resourceId, payload);
+      if (result?.progress) setProgress(result.progress);
+      if (Array.isArray(result?.unlockedAchievements) && result.unlockedAchievements.length) {
+        setAchievementQueue((current) => [...current, ...result.unlockedAchievements]);
+      }
+      setProgressError("");
+      return result;
+    } catch (saveError) {
+      if (!silent) {
+        setProgressError(saveError?.message || "Could not save your progress.");
+      }
+      return null;
+    }
+  }
+
+  useEffect(() => {
+    if (!resource?._id || viewTrackedRef.current === resource._id) return;
+
+    viewTrackedRef.current = resource._id;
+
+    const startingPercent = resource.type === "video" ? Math.max(1, Number(progress.progressPercent || 0)) : Math.max(25, Number(progress.progressPercent || 0));
+
+    syncProgress({
+      interactionType: "view",
+      progressPercent: startingPercent,
+      lastPosition: Number(progress.lastPosition || 0),
+    });
+  }, [resource?._id, resource?.type]);
+
+  function handleVideoProgress(playerState = {}) {
+    const playedSeconds = Number(playerState.playedSeconds || 0);
+    const played = Number(playerState.played || 0);
+    const percent = Math.max(
+      1,
+      Math.min(99, Math.round((Number.isFinite(played) ? played : 0) * 100))
+    );
+    const now = Date.now();
+    const lastSync = lastSyncRef.current;
+
+    if (percent - lastSync.percent < 5 && now - lastSync.at < 15000) {
+      return;
+    }
+
+    lastSyncRef.current = { at: now, percent };
+
+    syncProgress({
+      interactionType: "progress",
+      progressPercent: percent,
+      lastPosition: playedSeconds,
+    });
+  }
+
+  function handleVideoDuration(duration) {
+    const durationSeconds = Number(duration || 0);
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return;
+
+    syncProgress({
+      interactionType: "progress",
+      durationSeconds,
+      progressPercent: Number(progress.progressPercent || 1),
+    });
+  }
+
+  function handleVideoEnded() {
+    syncProgress(
+      {
+        interactionType: "complete",
+        progressPercent: 100,
+        status: "completed",
+      },
+      { silent: false }
+    );
+  }
+
+  function handleOpenExternal() {
+    syncProgress({
+      interactionType: "complete",
+      progressPercent: 100,
+      status: "completed",
+    });
+  }
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -71,13 +201,17 @@ export default function ResourceViewer({ resourceId }) {
     );
   }
 
-  // Determine if we're showing PDF or image for conditional rendering
   const isPdfOrImage = resourceType === "pdf" || resourceType === "image";
+  const progressPercent = Number(progress?.progressPercent || 0);
 
   return (
-    <div className={`resource-viewer ${isPdfOrImage ? 'centered-mode' : ''}`}>
+    <div className={`resource-viewer ${isPdfOrImage ? "centered-mode" : ""}`}>
+      <AchievementUnlockOverlay
+        achievement={achievementQueue[0]}
+        onDismiss={dismissAchievement}
+      />
+
       <div className="space-y-6">
-        {/* Hide title section for PDF and image */}
         {!isPdfOrImage && (
           <div>
             <h1 className="text-4xl font-bold mb-2 text-gray-900">{resource.title}</h1>
@@ -87,13 +221,39 @@ export default function ResourceViewer({ resourceId }) {
           </div>
         )}
 
-        {/* Conditional card class based on resource type */}
-        <div className={`card ${resourceType === 'pdf' ? 'pdf-card' : resourceType === 'image' ? 'image-card' : ''} p-6 overflow-hidden`}>
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-2 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Your progress
+              </p>
+              <p className="text-sm font-medium text-slate-900">
+                {progress?.status === "completed" ? "Completed" : "Learning in progress"}
+              </p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+              {formatPercent(progressPercent)}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all"
+              style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
+            />
+          </div>
+          {progressError && <p className="mt-2 text-sm text-red-600">{progressError}</p>}
+        </section>
+
+        <div className={`card ${resourceType === "pdf" ? "pdf-card" : resourceType === "image" ? "image-card" : ""} p-6 overflow-hidden`}>
           {resourceType === "video" && (
             <div className="bg-black rounded-lg overflow-hidden">
               <ReactPlayer
                 src={fileUrl}
                 controls
+                progressInterval={10000}
+                onProgress={handleVideoProgress}
+                onDuration={handleVideoDuration}
+                onEnded={handleVideoEnded}
                 width="100%"
                 height="100%"
                 style={{ aspectRatio: "16 / 9" }}
@@ -102,53 +262,49 @@ export default function ResourceViewer({ resourceId }) {
           )}
 
           {resourceType === "image" && (
-            <img
-              src={fileUrl}
-              alt={resource.title}
-              className="centered-image"
-            />
+            <img src={fileUrl} alt={resource.title} className="centered-image" />
           )}
 
           {resourceType === "pdf" && (
             <div className="pdf-container">
               <div className="pdf-wrapper">
-                <iframe
-                  src={fileUrl}
-                  title={resource.title}
-                  className="pdf-iframe"
-                />
+                <iframe src={fileUrl} title={resource.title} className="pdf-iframe" />
               </div>
               <a
                 href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary inline-block pdf-link"
+                onClick={handleOpenExternal}
               >
                 Open PDF in new tab
               </a>
             </div>
           )}
 
-          {(resourceType === "text" ||
-            resourceType === "article" ||
-            resourceType === "quiz") && (
+          {(resourceType === "text" || resourceType === "article") && (
             <article className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed text-lg">
                 {resource.description || "No content available."}
               </p>
+              <button type="button" className="btn-primary mt-5" onClick={handleOpenExternal}>
+                Mark as completed
+              </button>
             </article>
           )}
 
           {resource.sourceUrl &&
             resourceType !== "video" &&
             resourceType !== "image" &&
-            resourceType !== "pdf" && (
+            resourceType !== "pdf" &&
+            resourceType !== "text" && (
               <div className="flex flex-col items-center justify-center py-10">
                 <a
                   href={resource.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary"
+                  onClick={handleOpenExternal}
                 >
                   Open External Link
                 </a>
@@ -156,89 +312,12 @@ export default function ResourceViewer({ resourceId }) {
             )}
         </div>
 
-        {/* Hide description section for PDF and image */}
         {!isPdfOrImage && resource.description && resourceType !== "text" && (
           <div className="card p-6">
             <h3 className="text-xl font-semibold mb-3">Description</h3>
             <p className="text-gray-700 leading-relaxed">{resource.description}</p>
           </div>
         )}
-        {!isPdfOrImage && resource.description && resourceType !== "text" && (
-  <div className="flex flex-col gap-6">
-    {/* 1. Existing Description Card */}
-    <div className="card p-6">
-      <h3 className="text-xl font-semibold mb-3">Description</h3>
-      <p className="text-gray-700 leading-relaxed">{resource.description}</p>
-    </div>
-
-    {/* 2. Video Case */}
-    {resourceType === "video" && resource.videoUrl && (
-      <div className="card p-6">
-        <h3 className="text-xl font-semibold mb-3">Video Preview</h3>
-        <div className="aspect-video rounded-lg overflow-hidden bg-black">
-          <video 
-            src={resource.videoUrl} 
-            controls 
-            className="w-full h-full"
-          >
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      </div>
-    )}
-
-    {/* 3. Link Case */}
-    {resourceType === "link" && resource.externalUrl && (
-      <div className="card p-6">
-        <h3 className="text-xl font-semibold mb-3">External Resource</h3>
-        <p className="text-gray-600 mb-4">Click the button below to visit the external link.</p>
-        <a 
-          href={resource.externalUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Visit Link 
-          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      </div>
-    )}
-  </div>
-)}
-{resourceType === "pdf" && resource.pdfUrl && (
-  <div className="card p-6">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="text-xl font-semibold">PDF Document</h3>
-      <a 
-        href={resource.pdfUrl} 
-        download 
-        className="pdf-download-btn"
-      >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="配M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        Download PDF
-      </a>
-    </div>
-
-    {/* PDF Preview Frame */}
-    <div className="pdf-preview-container">
-      <iframe
-        src={`${resource.pdfUrl}#toolbar=0`}
-        className="pdf-iframe"
-        title="PDF Preview"
-      ></iframe>
-      <div className="pdf-overlay-footer">
-        <p className="text-sm text-gray-500">Previewing document...</p>
-        <a href={resource.pdfUrl} target="_blank" rel="noreferrer" className="text-blue-600 text-sm font-medium hover:underline">
-          Open in New Tab
-        </a>
-      </div>
-    </div>
-  </div>
-)}
       </div>
     </div>
   );

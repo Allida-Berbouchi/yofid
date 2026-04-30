@@ -30,11 +30,22 @@ const SearchLineIcon = () => (
 );
 
 export default function SupportPage() {
-  const [openIndex, setOpenIndex] = useState(null); // Track which FAQ is open
+  const [subject, setSubject] = useState("Support Request");
+  const [openIndex, setOpenIndex] = useState(null);
 
-const toggleFaq = (index) => {
-  setOpenIndex(openIndex === index ? null : index); // Close if same, open if different
-};
+  const handleEmailSupport = () => {
+    setSubject("Support Request");
+
+    const email = "maiziamohamed8@gmail.com";
+    const body = "Hello, I need help with..."; 
+    
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(gmailUrl, '_blank');
+  
+    setTimeout(() => {
+        window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }, 500);
+  }
   return (
     <AppLayout>
       <Topbar placeholder="Search help articles, API docs, or tutorials..." />
@@ -102,8 +113,13 @@ const toggleFaq = (index) => {
             onboarding questions, or billing requests.
           </p>
           <div className="dual-actions">
-            <button className="primary-action">Start Live Chat</button>
-            <button className="ghost-action">Email Support</button>
+            
+          <button 
+  className="ghost-action" 
+  onClick={handleEmailSupport}
+>
+  Email Support
+</button>
           </div>
         </section>
 

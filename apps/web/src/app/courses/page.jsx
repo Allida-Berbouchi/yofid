@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import Topbar from "@/components/Topbar";
 import CourseCard from "@/components/CourseCard";
-import { fetchCoursese } from "../../lib/api";
+import  {fetchCourses} from "@/lib/api";
 
 const SearchLineIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -28,7 +28,7 @@ export default function CoursesPage() {
     async function loadCourses() {
       try {
         setLoading(true);
-        const data = await fetchCoursese();
+        const data = await fetchCourses();
         setCourses(data || []);
         setFilteredCourses(data || []);
         setError(null);
@@ -47,7 +47,7 @@ export default function CoursesPage() {
   useEffect(() => {
     let filtered = courses;
 
-    // Apply search filter
+    
     if (searchQuery.trim()) {
       filtered = filtered.filter(
         (course) =>
@@ -56,7 +56,7 @@ export default function CoursesPage() {
       );
     }
 
-    // Apply discipline filter
+  
     if (selectedFilter !== "all") {
       filtered = filtered.filter((course) => course.discipline === selectedFilter);
     }
@@ -71,7 +71,7 @@ export default function CoursesPage() {
     setCurrentPage(1);
   };
 
-  // Pagination
+
   const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
   const startIndex = (currentPage - 1) * coursesPerPage;
   const paginatedCourses = filteredCourses.slice(startIndex, startIndex + coursesPerPage);
@@ -81,7 +81,6 @@ export default function CoursesPage() {
   };
 
   const handleCourseClick = (courseId) => {
-    // Navigate to course detail page
     window.location.href = `/courses/${courseId}`;
   };
 

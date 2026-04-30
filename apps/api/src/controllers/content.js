@@ -1,132 +1,161 @@
-import fs from "fs";
+import fs from 'fs';
 
 import Content from '../models/Content.js';
 import Review from '../models/Review.js';
-import Course from "../models/Course.js";
-import Bookmark from "../models/Bookmark.js";
-import UserProgress from "../models/UserProgress.js";
+import Comment from '../models/Comment.js';
+import Course from '../models/Course.js';
+import Bookmark from '../models/Bookmark.js';
+import UserProgress from '../models/UserProgress.js';
+import {
+  recordContentInteraction,
+  recordLearningProgress,
+} from '../services/learningProgress.js';
 
-const getTypeFromMime = (mime) => {
-  if (mime.startsWith("video/")) return "video";
-  if (mime.startsWith("image/")) return "image";
-  if (mime === "application/pdf") return "pdf";
+const allowedTypes = ['video', 'image', 'pdf', 'link', 'text', 'article'];
+
+const getUserId = (req) =>
+  req.user?._id?.toString() ||
+  req.user?.id ||
+  req.account?._id?.toString() ||
+  req.account?.id;
+
+const getUserRole = (req) => req.user?.role || req.account?.role || 'user';
+
+export const isValidObjectId = (id) =>
+  Boolean(id && String(id).match(/^[0-9a-fA-F]{24}$/));
+
+const getTypeFromMime = (mime = '') => {
+  if (mime.startsWith('video/')) return 'video';
+  if (mime.startsWith('image/')) return 'image';
+  if (mime === 'application/pdf') return 'pdf';
   return null;
 };
 
+const normalizeSelectedType = (selectedType) => {
+  if (!selectedType) return null;
+
+  const value = String(selectedType).toLowerCase();
+  return allowedTypes.includes(value) ? value : null;
+};
+
 const getTypeFromUrl = (value, selectedType) => {
-  if (selectedType) return selectedType;
-  const url = String(value || "").toLowerCase();
-  if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com")) return "video";
-  if (url.endsWith(".pdf")) return "pdf";
-  if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)) return "image";
-  return "video";
-};
+  const normalizedType = normalizeSelectedType(selectedType);
 
-const clampScore = (value) => {
-  if (value > 1) return 1;
-  if (value < 0) return 0;
-  return value;
-};
+  if (normalizedType) return normalizedType;
 
-const updateEngagementScore = async (contentId, scoreChange) => {
-  try {
-    const content = await Content.findById(contentId);
+  const url = String(value || '').toLowerCase();
 
-    if (!content) {
-      return { error: "Content not found" };
-    }
-
-    content.engagementScore = clampScore(
-      Number(content.engagementScore || 0) + Number(scoreChange || 0)
-    );
-
-    await content.save();
-    return content;
-  } catch (error) {
-    return { error: error.message };
+  if (
+    url.includes('youtube.com') ||
+    url.includes('youtu.be') ||
+    url.includes('vimeo.com') ||
+    url.endsWith('.mp4') ||
+    url.endsWith('.mov') ||
+    url.endsWith('.webm')
+  ) {
+    return 'video';
   }
+
+  if (url.endsWith('.pdf')) return 'pdf';
+  if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)) return 'image';
+
+  return 'link';
 };
 
-const enrichContentItem = async (item) => {
-  const contentId = item._id;
+const parseUrlItems = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
 
-  const [reviewCount, commentCount, bookmarkCount, completionStats] =
-    await Promise.all([
-      Review.countDocuments({ contentId }),
-      Review.countDocuments({
-        contentId,
-        comment: { $exists: true, $nin: [null, ""] },
-      }),
-      Bookmark.countDocuments({ contentId }),
-      UserProgress.aggregate([
-        { $match: { contentId } },
-        {
-          $group: {
-            _id: "$contentId",
-            total: { $sum: 1 },
-            completed: {
-              $sum: {
-                $cond: [{ $eq: ["$status", "completed"] }, 1, 0],
-              },
-            },
-          },
-        },
-      ]),
-    ]);
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
 
-  const completionTotal = completionStats[0]?.total || 0;
-  const completionCount = completionStats[0]?.completed || 0;
-  const completionRate = completionTotal
-    ? Math.round((completionCount / completionTotal) * 100)
-    : 0;
+  return [];
+};
+
+const serializeContent = (content) =>
+  content?.toObject ? content.toObject() : content;
+
+const enrichContentItem = async (content) => {
+  const item = serializeContent(content);
+
+  if (!item?._id) {
+    return item;
+  }
+
+  const learnerCount = await UserProgress.countDocuments({ contentId: item._id });
+  const completionCount = await UserProgress.countDocuments({
+    contentId: item._id,
+    status: 'completed',
+  });
 
   return {
-    ...item.toObject(),
-    reviewCount,
-    commentCount,
-    bookmarkCount,
-    completionRate,
+    ...item,
+    learnerCount,
+    completionCount,
+    completionRate: learnerCount ? completionCount / learnerCount : 0,
   };
 };
 
-// --- Exported Methods ---
-
 const createContent = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = getUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
     const { title, description, category, subject, gradeLevel, courseId } = req.body;
+    const urlItems = parseUrlItems(req.body.urlItems);
+    const files = req.files || [];
 
-    let urlItems = req.body.urlItems ? JSON.parse(req.body.urlItems) : [];
-
-    // Validation: Must have at least one file or one URL
-    if ((!req.files || req.files.length === 0) && urlItems.length === 0) {
-      return res.status(400).json({ message: "Please upload at least one file or one URL" });
+    if (files.length === 0 && urlItems.length === 0) {
+      return res.status(400).json({
+        message: 'Please upload at least one file or add at least one URL',
+      });
     }
 
     if (courseId) {
-      const course = await Course.findOne({ _id: courseId, createdBy: userId });
-      if (!course) return res.status(404).json({ message: "Course not found" });
+      if (!isValidObjectId(courseId)) {
+        return res.status(400).json({ message: 'Invalid courseId' });
+      }
+
+      const courseQuery =
+        getUserRole(req) === 'admin'
+          ? { _id: courseId }
+          : { _id: courseId, createdBy: userId };
+
+      const course = await Course.findOne(courseQuery);
+
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
     }
 
     const docsToCreate = [];
 
-    for (const file of req.files || []) {
+    for (const file of files) {
       const type = getTypeFromMime(file.mimetype);
       if (!type) continue;
 
       docsToCreate.push({
         title: title || file.originalname,
-        description: description || "",
-        category: category || "",
-        subject: subject || "",
-        gradeLevel: gradeLevel || "",
+        description: description || '',
+        category: category || '',
+        subject: subject || '',
+        gradeLevel: gradeLevel || '',
         type,
-        sourceKind: "file",
+        sourceKind: 'file',
         url: `/uploads/${file.filename}`,
         fileName: file.originalname,
         mimeType: file.mimetype,
         size: file.size,
-        storageType: "local",
+        storageType: 'local',
         localPath: file.path,
         courseId: courseId || null,
         createdBy: userId,
@@ -135,58 +164,88 @@ const createContent = async (req, res) => {
 
     for (const item of urlItems) {
       if (!item?.url) continue;
+
       docsToCreate.push({
-        title: item.title || title || "Untitled URL Content",
-        description: item.description || description || "",
-        category: item.category || category || "",
-        subject: subject || "",
-        gradeLevel: gradeLevel || "",
+        title: item.title || title || 'Untitled URL Content',
+        description: item.description || description || '',
+        category: item.category || category || '',
+        subject: subject || '',
+        gradeLevel: gradeLevel || '',
         type: getTypeFromUrl(item.url, item.type),
-        sourceKind: "url",
+        sourceKind: 'url',
         url: item.url,
-        storageType: "external",
+        storageType: 'external',
         courseId: courseId || null,
         createdBy: userId,
       });
     }
 
-    const created = await Content.insertMany(docsToCreate);
-    res.status(201).json({ message: "Content created successfully", items: created });
+    if (docsToCreate.length === 0) {
+      return res.status(400).json({
+        message: 'No valid content files or URLs were provided',
+      });
+    }
+
+    const created = await Content.insertMany(docsToCreate, {
+      ordered: true,
+      runValidators: true,
+    });
+
+    return res.status(201).json({
+      message: 'Content created successfully',
+      items: created,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      message: 'Failed to create content',
+      error: error.message,
+    });
   }
 };
 
 const listAllContent = async (req, res) => {
   try {
-    const content = await Content.find()
-      .populate('createdBy', 'name email role')
-      .sort({ engagementScore: -1, createdAt: -1 });
+    const limit = Math.max(0, Math.min(100, Number(req.query.limit || 20)));
+    const status = req.query.status;
+    const filter = status && status !== 'all' ? { status } : {};
 
-    res.json(content);
+    let query = Content.find(filter)
+      .populate('createdBy', 'name email role')
+      .populate('courseId', 'title description')
+      .sort({ engagementScore: -1, totalViews: -1, createdAt: -1 });
+
+    if (limit > 0) {
+      query = query.limit(limit);
+    }
+
+    const content = await query;
+    return res.json(content);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to fetch content',
+      error: err.message,
+    });
   }
 };
 
-const listTopContent = async (req, res) => {
+const listTopContent = async (_req, res) => {
   try {
-    const allApprovedContent = await Content.find({ status: "approved" }).sort({
+    const allApprovedContent = await Content.find({ status: 'approved' }).sort({
       engagementScore: -1,
       totalViews: -1,
       createdAt: -1,
     });
 
-    const content = allApprovedContent
-      .slice(0, 10);
-
+    const content = allApprovedContent.slice(0, 10);
     const categories = Array.from(
       new Set(allApprovedContent.map((item) => item.category).filter(Boolean))
     );
+
     const totalViews = allApprovedContent.reduce(
       (sum, item) => sum + Number(item.totalViews || 0),
       0
     );
+
     const avgScore = allApprovedContent.length
       ? allApprovedContent.reduce(
           (sum, item) => sum + Number(item.engagementScore || 0),
@@ -195,7 +254,8 @@ const listTopContent = async (req, res) => {
       : 0;
 
     const topContent = await Promise.all(content.map(enrichContentItem));
-    res.json({
+
+    return res.json({
       summary: {
         totalContent: await Content.countDocuments(),
         approvedContent: allApprovedContent.length,
@@ -207,138 +267,229 @@ const listTopContent = async (req, res) => {
       topContent,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to fetch top content',
+      error: err.message,
+    });
   }
 };
 
 const listMyContent = async (req, res) => {
   try {
-    const query = req.account?.role === "admin"
-      ? {}
-      : { createdBy: req.user.id };
+    const userId = getUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const query = getUserRole(req) === 'admin' ? {} : { createdBy: userId };
 
     const content = await Content.find(query)
-      .populate("courseId", "title")
+      .populate('courseId', 'title description')
+      .populate('createdBy', 'name email role')
       .sort({ createdAt: -1 });
 
-    res.json(content);
+    return res.json(content);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to fetch your content',
+      error: err.message,
+    });
   }
 };
 
 const submitForApproval = async (req, res) => {
   try {
     const { contentId } = req.body;
+
+    if (!isValidObjectId(contentId)) {
+      return res.status(400).json({ message: 'Invalid contentId' });
+    }
+
     const content = await Content.findById(contentId);
-    if (!content) return res.status(404).json({ message: 'Content not found' });
+
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
 
     content.status = 'pending';
     await content.save();
-    res.json({ message: 'Content submitted for approval', contentId });
+
+    return res.json({
+      message: 'Content submitted for approval',
+      content,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to submit content',
+      error: err.message,
+    });
   }
 };
 
 const getContent = async (req, res) => {
   try {
-    const content = await Content.findById(req.params.id);
-    if (!content) return res.status(404).json({ message: 'Content not found' });
-    res.json(content);
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid content id' });
+    }
+
+    const content = await Content.findById(id)
+      .populate('createdBy', 'name email role')
+      .populate('courseId', 'title description');
+
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
+    return res.json(content);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to fetch content',
+      error: err.message,
+    });
   }
 };
 
-const addReview = async (req, res) => {
+const getContentProgress = async (req, res) => {
   try {
-    const { contentId, rating, comment } = req.body;
-    const content = await Content.findById(contentId);
-    if (!content) return res.status(404).json({ message: 'Content not found' });
+    const userId = getUserId(req);
+    const { id } = req.params;
 
-    const review = await Review.create({
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid content id' });
+    }
+
+    const progress = await UserProgress.findOne({ userId, contentId: id }).lean();
+
+    return res.json(
+      progress || {
+        userId,
+        contentId: id,
+        status: 'not_started',
+        progressPercent: 0,
+        lastPosition: 0,
+        durationSeconds: 0,
+        viewCount: 0,
+      }
+    );
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to fetch progress',
+      error: error.message,
+    });
+  }
+};
+
+const saveContentProgress = async (req, res) => {
+  try {
+    const contentId = req.params.id;
+
+    if (!isValidObjectId(contentId)) {
+      return res.status(400).json({ message: 'Invalid content id' });
+    }
+
+    const result = await recordLearningProgress({
+      userId: getUserId(req),
       contentId,
-      userId: req.user.id,
-      rating,
-      comment,
+      interactionType: req.body.interactionType || 'progress',
+      progressPercent: req.body.progressPercent,
+      lastPosition: req.body.lastPosition,
+      durationSeconds: req.body.durationSeconds,
+      status: req.body.status,
     });
 
-    const stats = await Review.aggregate([
-      { $match: { contentId: content._id } },
-      { $group: { _id: '$contentId', averageRating: { $avg: '$rating' } } },
-    ]);
-
-    content.averageRating = stats[0]?.averageRating ?? rating;
-    await content.save();
-
-    res.status(201).json({ message: 'Review added', reviewId: review._id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.json({
+      message: 'Progress saved',
+      ...result,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || 'Failed to save progress',
+    });
   }
 };
 
 const handleContentInteraction = async (req, res) => {
   try {
     const { contentId, interactionType } = req.body;
-    let scoreChange = 0;
 
-    switch (interactionType) {
-      case "like":
-        scoreChange = 0.1;
-        break;
-      case "comment":
-        scoreChange = 0.05;
-        break;
-      case "earlyExit":
-        scoreChange = -0.1;
-        break;
-      case "complete":
-        scoreChange = 0.1;
-        break;
-      default:
-        return res.status(400).json({ message: "Invalid interaction" });
+    if (!isValidObjectId(contentId)) {
+      return res.status(400).json({ message: 'Invalid contentId' });
     }
 
-    const updatedContent = await updateEngagementScore(contentId, scoreChange);
-
-    if (updatedContent.error) {
-      return res.status(404).json({ message: updatedContent.error });
-    }
+    const result = await recordContentInteraction({
+      userId: getUserId(req),
+      contentId,
+      interactionType,
+    });
 
     return res.json({
-      message: "Score updated successfully",
-      updatedContent,
+      message: 'Interaction saved',
+      ...result,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(error.status || 500).json({
+      message: error.message || 'Failed to update interaction',
+    });
   }
 };
 
 const deleteContent = async (req, res) => {
   try {
-    const content = await Content.findById(req.params.id);
+    const userId = getUserId(req);
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid content id' });
+    }
+
+    const content = await Content.findById(id);
 
     if (!content) {
-      return res.status(404).json({ message: "Content not found" });
+      return res.status(404).json({ message: 'Content not found' });
     }
 
-    const isAdmin = req.account?.role === "admin";
-    const isOwner = content.createdBy?.toString() === req.user.id;
+    const isAdmin = getUserRole(req) === 'admin';
+    const isOwner = content.createdBy?.toString() === userId;
 
     if (!isAdmin && !isOwner) {
-      return res.status(403).json({ message: "You can only delete your own content" });
+      return res.status(403).json({
+        message: 'You can only delete your own content',
+      });
     }
 
-    if (content.sourceKind === "file" && content.localPath && fs.existsSync(content.localPath)) {
+    if (
+      content.sourceKind === 'file' &&
+      content.localPath &&
+      fs.existsSync(content.localPath)
+    ) {
       fs.unlinkSync(content.localPath);
     }
 
+    await Review.deleteMany({ contentId: content._id });
+    await Comment.deleteMany({ contentId: content._id });
+    await Bookmark.deleteMany({ contentId: content._id });
+    await UserProgress.deleteMany({ contentId: content._id });
     await content.deleteOne();
 
-    return res.json({ message: "Content deleted successfully" });
+    return res.json({
+      message: 'Content deleted successfully',
+    });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: 'Failed to delete content',
+      error: err.message,
+    });
   }
 };
 
@@ -346,7 +497,8 @@ export default {
   createContent,
   submitForApproval,
   getContent,
-  addReview,
+  getContentProgress,
+  saveContentProgress,
   handleContentInteraction,
   listAllContent,
   listTopContent,

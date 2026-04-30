@@ -1,5 +1,6 @@
 node_modules
 .env
+.next
 .env.example
 pnpm-lock.yaml
 uploads/files/

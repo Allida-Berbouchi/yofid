@@ -52,6 +52,7 @@ export async function apiFetch(path, opts = {}) {
     }
 }
 
+// Content
 export function normalizeContentItem(item = {}) {
     const type = item.type === "article" ? "text" : item.type;
     return {
@@ -61,11 +62,13 @@ export function normalizeContentItem(item = {}) {
         moduleId: item.moduleId || item.subject || item.category || item.gradeLevel || "General",
         sourceUrl: item.sourceUrl || item.url || "",
         url: item.url || item.sourceUrl || "",
+        engagementScore: Number(item.engagementScore || 0),
+        totalViews: Number(item.totalViews || 0),
     };
 }
 
 export async function fetchContentList() {
-    const result = await apiFetch("/api/content");
+    const result = await apiFetch("/api/content/");
 
     if (!result.ok) {
         throw new Error(result.data?.message || "Failed to fetch content");
@@ -89,17 +92,20 @@ export async function fetchTopContent() {
     };
 }
 
-export async function trackContentInteraction(contentId, interactionType) {
+export async function trackContentInteraction(contentId, interactionType, extra = {}) {
     const result = await apiFetch("/api/content/interactions", {
         method: "POST",
-        body: JSON.stringify({ contentId, interactionType }),
+        body: JSON.stringify({ contentId, interactionType, ...extra }),
     });
 
     if (!result.ok) {
         throw new Error(result.data?.message || "Failed to update engagement score");
     }
 
-    return normalizeContentItem(result.data?.updatedContent || {});
+    return {
+        ...result.data,
+        updatedContent: normalizeContentItem(result.data?.updatedContent || {}),
+    };
 }
 
 export async function fetchContentById(id) {
@@ -112,34 +118,47 @@ export async function fetchContentById(id) {
     return normalizeContentItem(result.data);
 }
 
+export async function fetchResources(limit = 20) {
+    const result = await apiFetch(`/api/content?limit=${limit}`);
 
-//courses
-export function normalizeCouresItem(item = {}) {
-    const defaultIcon = "/default-course-icon.svg";
-    return {
-        ...item,
-        _id: item._id,
-        title: item.title || "",
-        description: item.description || "",
-        avgTime: item.avgTime || 0,
-        icon: item.icon || defaultIcon,
-        createdBy: item.createdBy,
-    };
-}
-
-export async function fetchCoursese() {
-    const result = await apiFetch("/api/courses/list");
-    
     if (!result.ok) {
-        throw new Error(result.data?.message || "Failed to fetch courses");
+        throw new Error(result.data?.message || "Failed to fetch resources");
     }
 
-    return Array.isArray(result.data) 
-        ? result.data.map(normalizeCouresItem) 
-        : [];
+    return Array.isArray(result.data) ? result.data.map(normalizeContentItem) : [];
 }
 
-//User
+export async function fetchMyContent() {
+    const result = await apiFetch("/api/content/mine");
+    if (!result.ok) {
+        console.warn("fetchMyContent failed:", result.data?.message);
+        return [];
+    }
+    return Array.isArray(result.data) ? result.data.map(normalizeContentItem) : [];
+}
+
+export async function createContent(formData) {
+    const result = await apiFetch("/api/content", {
+        method: "POST",
+        body: formData,
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to create content");
+    }
+    return result.data;
+}
+
+export async function deleteContent(id) {
+    const result = await apiFetch(`/api/content/${id}`, {
+        method: "DELETE",
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Delete failed");
+    }
+    return result.data;
+}
+
+// User progress
 export async function fetchUserProgress() {
     const result = await apiFetch("/api/users/progress");
     if (!result.ok) {
@@ -147,6 +166,7 @@ export async function fetchUserProgress() {
     }
     return Array.isArray(result.data) ? result.data : [];
 }
+
 
 export async function fetchContentProgress(contentId) {
     const result = await apiFetch(`/api/content/${contentId}/progress`);
@@ -156,6 +176,21 @@ export async function fetchContentProgress(contentId) {
     return result.data || { status: "not_started", progressPercent: 0 };
 }
 
+export async function saveContentProgress(contentId, payload = {}) {
+    const result = await apiFetch(`/api/content/${contentId}/progress`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to save progress");
+    }
+
+    return {
+        ...result.data,
+        updatedContent: normalizeContentItem(result.data?.updatedContent || {}),
+    };
+}
 
 export async function fetchCurrentUser() {
     const result = await apiFetch("/api/users/me");
@@ -164,7 +199,6 @@ export async function fetchCurrentUser() {
     }
     return result.data;
 }
-
 
 export async function fetchMyAchievements() {
     const result = await apiFetch("/api/achievements/me");
@@ -190,6 +224,92 @@ export async function markAchievementSeen(userAchievementId) {
     });
     if (!result.ok) {
         throw new Error(result.data?.message || "Failed to mark achievement seen");
+    }
+    return result.data;
+}
+
+// Courses
+export function normalizeCourseItem(item = {}) {
+  const defaultIcon = "/default-course-icon.svg";
+
+  return {
+    ...item,
+    _id: item._id || item.id,
+    title: item.title || "",
+    description: item.description || "",
+    avgTime: Number(item.avgTime || 0),
+    icon: item.icon || defaultIcon,
+    createdBy: item.createdBy || null,
+  };
+}
+
+export async function fetchCourses() {
+  const result = await apiFetch("/api/courses/list");
+
+  if (!result.ok) {
+    throw new Error(result.data?.message || "Failed to fetch courses");
+  }
+
+  return Array.isArray(result.data)
+    ? result.data.map(normalizeCourseItem)
+    : [];
+}
+
+export async function fetchMyCourses() {
+  const result = await apiFetch("/api/courses/mine");
+
+  if (!result.ok) {
+    console.warn("fetchMyCourses failed:", result.data?.message);
+    return [];
+  }
+
+  return Array.isArray(result.data)
+    ? result.data.map(normalizeCourseItem)
+    : [];
+}
+
+export async function createCourse(title, description = "") {
+  const result = await apiFetch("/api/courses/creat", {
+    method: "POST",
+    body: JSON.stringify({
+      title,
+      description,
+    }),
+  });
+
+  if (!result.ok) {
+    throw new Error(result.data?.message || "Failed to create course");
+  }
+
+  return normalizeCourseItem(result.data);
+}
+
+export async function fetchResourceFeedback(contentId) {
+    const result = await apiFetch(`/api/reviews/${contentId}`);
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to fetch comments and reviews");
+    }
+    return result.data || { comments: [], averageRating: 0, reviewCount: 0 };
+}
+
+export async function saveResourceReview(contentId, rating) {
+    const result = await apiFetch("/api/reviews", {
+        method: "POST",
+        body: JSON.stringify({ contentId, rating }),
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to save review");
+    }
+    return result.data;
+}
+
+export async function saveResourceComment(contentId, comment) {
+    const result = await apiFetch("/api/reviews/comments", {
+        method: "POST",
+        body: JSON.stringify({ contentId, comment }),
+    });
+    if (!result.ok) {
+        throw new Error(result.data?.message || "Failed to save comment");
     }
     return result.data;
 }

@@ -51,7 +51,6 @@ const login = async (req, res) => {
       { expiresIn: '1d' },
     );
 
-    // Return the full user object (excluding passwordHash)
     const userObj = user.toObject();
     delete userObj.passwordHash;
     return res.json({ token, user: userObj });
@@ -77,7 +76,7 @@ const requestCreatorStatus = async (req, res) => {
 };
 
 
-// Get current user info
+// Get user info
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-passwordHash');
@@ -88,7 +87,6 @@ const getMe = async (req, res) => {
   }
 };
 
-// Get user progress for all content
 const getProgress = async (req, res) => {
   try {
     const progress = await UserProgress.find({ userId: req.user.id });

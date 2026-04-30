@@ -1,0 +1,61 @@
+.card-container {
+  width: 50%;
+}
+
+.title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.2rem;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.line-container {
+  background-color: #e8e8e8;
+  border-radius: 6px;
+  height: 4px;
+  margin: 0.4rem 0;
+  overflow: hidden;
+}
+
+.mastery-line {
+  background: linear-gradient(90deg, #4a90e2, #357abd);
+  border-radius: 6px;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.mm {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
+.mm p {
+  font-size: 0.65rem;
+  margin: 0;
+}
+
+.mm p:first-child {
+  color: #666;
+  font-weight: 500;
+}
+
+.mm p:last-child {
+  font-weight: 600;
+  font-size: 0.6rem;
+}

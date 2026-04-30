@@ -11,6 +11,7 @@ import {
   markAchievementSeen,
 } from "@/lib/api";
 import AppLayout from "@/components/AppLayout";
+import AchievementUnlockOverlay from "@/components/AchievementUnlockOverlay";
 import PremiumAchievementIcon from "@/components/PremiumAchievementIcon";
 import Topbar from "@/components/Topbar";
 
@@ -102,6 +103,7 @@ export default function MyLearningPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [achievementQueue, setAchievementQueue] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,21 +139,12 @@ export default function MyLearningPage() {
         setProgressItems(Array.isArray(progress) ? progress : []);
         setAchievementData(achievements);
 
-        // If there are achievements that are unlocked but not yet marked "seen",
-        // mark them on the backend AND refresh UI state so the user sees it instantly.
-        const unseenIds = (achievements?.unseen || [])
-          .map((item) => item.userAchievementId)
-          .filter(Boolean);
+        const unseenAchievements = Array.isArray(achievements?.unseen)
+          ? achievements.unseen
+          : [];
 
-        if (unseenIds.length) {
-          await Promise.allSettled(unseenIds.map((id) => markAchievementSeen(id)));
-
-          try {
-            const refreshed = await fetchMyAchievements();
-            if (!cancelled) setAchievementData(refreshed);
-          } catch (refreshError) {
-            console.error("Failed to refresh achievements after marking seen:", refreshError);
-          }
+        if (unseenAchievements.length) {
+          setAchievementQueue(unseenAchievements);
         }
       } catch (loadError) {
         if (cancelled) {
@@ -172,6 +165,22 @@ export default function MyLearningPage() {
       cancelled = true;
     };
   }, []);
+
+  async function dismissAchievement(achievement) {
+    const userAchievementId = achievement?.userAchievementId || achievement?._id || achievement?.id;
+
+    setAchievementQueue((current) => current.slice(1));
+
+    if (!userAchievementId) return;
+
+    try {
+      await markAchievementSeen(userAchievementId);
+      const refreshed = await fetchMyAchievements();
+      setAchievementData(refreshed);
+    } catch (seenError) {
+      console.error("Failed to mark achievement seen:", seenError);
+    }
+  }
 
   const pageData = useMemo(() => {
     const contentById = new Map(
@@ -296,6 +305,10 @@ export default function MyLearningPage() {
   return (
     <AppLayout>
       <Topbar />
+      <AchievementUnlockOverlay
+        achievement={achievementQueue[0]}
+        onDismiss={dismissAchievement}
+      />
       <div className="page-shell">
         <section className="page-head">
           <h1 className="page-title">
